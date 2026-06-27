@@ -194,7 +194,7 @@
                             <div class="min-w-0 flex-1">
                                 <p class="truncate font-medium text-slate-900">{{ $pump['pump'] }}</p>
                                 <p class="mt-1 text-xs text-slate-500">
-                                    {{ number_format($pump['quantity'], 2) }} {{ $company->quantity_unit ?? 'KG' }}
+                                    {{ number_format($pump['quantity'], 2) }} {{ $company->quantity_unit ?? 'M3' }}
                                     · {{ $pump['count'] }} slip{{ $pump['count'] === 1 ? '' : 's' }}
                                 </p>
                             </div>

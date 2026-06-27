@@ -119,7 +119,7 @@
         <div class="form-field">
             <x-input-label for="quantity_unit" value="Quantity Unit" />
             <x-text-input id="quantity_unit" name="quantity_unit" type="text" :value="old('quantity_unit', $company->quantity_unit)" required />
-            <p class="text-xs text-slate-500">Example: KG or m3</p>
+            <p class="text-xs text-slate-500">Example: M3</p>
             <x-input-error :messages="$errors->get('quantity_unit')" />
         </div>
 

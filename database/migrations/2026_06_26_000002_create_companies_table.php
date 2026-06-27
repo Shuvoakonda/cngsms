@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('logo_path')->nullable();
             $table->string('currency', 10)->default('BDT');
             $table->string('date_format', 20)->default('d-m-Y');
-            $table->string('quantity_unit', 10)->default('KG');
+            $table->string('quantity_unit', 10)->default('M3');
             $table->timestamps();
             $table->softDeletes();
         });
