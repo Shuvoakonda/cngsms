@@ -41,6 +41,6 @@ class DatabaseSeeder extends Seeder
             'status' => UserStatus::Active,
         ]);
 
-        $this->call(DashboardDemoSeeder::class);
+        // $this->call(DashboardDemoSeeder::class);
     }
 }
