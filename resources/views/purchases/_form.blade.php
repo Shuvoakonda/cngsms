@@ -60,7 +60,7 @@
         </div>
 
         <div class="form-field">
-            <x-input-label for="purchase_quantity" value="Quantity ({{ $company->quantity_unit ?? 'MQ' }})" />
+            <x-input-label for="purchase_quantity" value="Quantity (MQ)" />
             <x-text-input id="purchase_quantity" name="quantity" type="number" step="0.01" min="0.01" :value="old('quantity')" required inputmode="decimal" @input="updateAmount()" />
             <x-input-error :messages="$errors->get('quantity')" />
         </div>
