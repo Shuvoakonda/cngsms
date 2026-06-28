@@ -2,23 +2,11 @@
 
     <x-slot name="header">
 
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
 
-            <div>
+            <h1 class="text-2xl font-bold text-slate-900">Pump Summary</h1>
 
-                <h1 class="text-2xl font-bold text-slate-900">Outstanding Due Report</h1>
-
-                <p class="mt-1 text-sm text-slate-600">Total purchase, payment, and due amount per pump.</p>
-
-            </div>
-
-            <div class="flex flex-wrap gap-2 print:hidden">
-
-                <a href="{{ route('reports.outstanding.export') }}" class="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-400 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">Export Excel</a>
-
-                <button type="button" onclick="window.print()" class="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-400 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50">Print</button>
-
-            </div>
+            <p class="mt-1 text-sm text-slate-600">Purchase entries, amount due, and advance balance left per pump.</p>
 
         </div>
 
@@ -26,69 +14,160 @@
 
 
 
-    <x-reports.print-header title="Outstanding Due Report" :meta="'As of '.now()->format('d M Y')" />
+    <x-reports.filter-card
 
+        :action="route('reports.outstanding')"
 
+        :export="route('reports.outstanding.export', request()->query())"
 
-    <div class="report-print-body mb-6 grid gap-6 lg:grid-cols-2">
+    >
 
-        <div class="rounded-2xl bg-white p-5 ring-1 ring-slate-200 print:hidden">
+        <div class="form-field">
 
-            <h2 class="font-semibold text-slate-900">Due by Pump</h2>
+            <x-input-label for="date_from" value="From" />
 
-            <div class="mt-4 h-72"><canvas id="outstandingReportChart"></canvas></div>
+            <x-text-input id="date_from" name="date_from" type="date" :value="$filters['date_from'] ?? ''" />
 
         </div>
 
-        <x-data-table-card class="lg:col-span-1">
+        <div class="form-field">
 
-            <thead>
+            <x-input-label for="date_to" value="To" />
 
-                <tr>
+            <x-text-input id="date_to" name="date_to" type="date" :value="$filters['date_to'] ?? ''" />
 
-                    <th>Pump</th>
+        </div>
 
-                    <th class="text-right">Purchase</th>
+    </x-reports.filter-card>
 
-                    <th class="text-right">Payment</th>
 
-                    <th class="text-right">Due</th>
 
-                </tr>
+    <div class="report-screen-only mb-4 grid gap-4 sm:grid-cols-3">
 
-            </thead>
+        <div class="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
 
-            <tbody>
+            <p class="text-xs text-slate-500">Total Entries</p>
 
-                @foreach ($rows as $row)
+            <p class="text-2xl font-bold text-slate-900">{{ number_format($totals['entries']) }}</p>
 
-                    <tr @class(['bg-rose-50' => $row['over_limit']])>
+        </div>
 
-                        <td class="col-primary font-medium" data-label="Pump">{{ $row['pump'] }}</td>
+        <div class="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
 
-                        <td class="text-right" data-label="Purchase">{{ number_format($row['total_purchase'], 2) }}</td>
+            <p class="text-xs text-slate-500">Total Due</p>
 
-                        <td class="text-right" data-label="Payment">{{ number_format($row['total_payment'], 2) }}</td>
+            <p class="text-2xl font-bold text-rose-700">{{ number_format($totals['due'], 2) }} {{ $company->currency }}</p>
 
-                        <td class="text-right font-semibold" data-label="Due">{{ number_format($row['due'], 2) }}</td>
+        </div>
 
-                    </tr>
+        <div class="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
 
-                @endforeach
+            <p class="text-xs text-slate-500">Total Advance Left</p>
 
-            </tbody>
+            <p class="text-2xl font-bold text-violet-700">{{ number_format($totals['advance'], 2) }} {{ $company->currency }}</p>
 
-        </x-data-table-card>
+        </div>
 
     </div>
 
 
 
-    <x-reports.print-footer :summary="'Total due: '.number_format($rows->sum('due'), 2).' '.$company->currency" />
+    <x-reports.print-shell
+
+        title="Pump Summary Report"
+
+        :meta="collect([
+
+            ($filters['date_from'] ?? null) || ($filters['date_to'] ?? null) ? 'Period: '.($filters['date_from'] ?? 'Start').' to '.($filters['date_to'] ?? 'Today') : null,
+
+            'As of '.now()->format('d M Y'),
+
+        ])->filter()->implode(' | ')"
+
+        :summary="'Due: '.number_format($totals['due'], 2).' '.$company->currency.' | Advance: '.number_format($totals['advance'], 2).' '.$company->currency"
+
+    >
+
+        <div class="report-print-body mb-6 grid gap-6 lg:grid-cols-2">
+
+            <div class="rounded-2xl bg-white p-5 ring-1 ring-slate-200 print:hidden">
+
+                <h2 class="font-semibold text-slate-900">Due by Pump</h2>
+
+                <div class="mt-4 h-72"><canvas id="outstandingReportChart"></canvas></div>
+
+            </div>
+
+            <x-data-table-card class="lg:col-span-1">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Pump</th>
+
+                        <th class="text-right">Entries</th>
+
+                        <th class="text-right">Purchase</th>
+
+                        <th class="text-right">Payment</th>
+
+                        <th class="text-right">Due</th>
+
+                        <th class="text-right">Advance</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    @foreach ($rows as $row)
+
+                        <tr @class(['bg-rose-50' => $row['over_limit']])>
+
+                            <td class="col-primary font-medium" data-label="Pump">{{ $row['pump'] }}</td>
+
+                            <td class="text-right" data-label="Entries">{{ number_format($row['entries']) }}</td>
+
+                            <td class="text-right" data-label="Purchase">{{ number_format($row['total_purchase'], 2) }}</td>
+
+                            <td class="text-right" data-label="Payment">{{ number_format($row['total_payment'], 2) }}</td>
+
+                            <td @class([
+                                'text-right font-semibold',
+                                'text-rose-700' => $row['due'] > 0,
+                                'text-slate-400' => $row['due'] <= 0,
+                            ]) data-label="Due">
+
+                                {{ $row['due'] > 0 ? number_format($row['due'], 2) : '—' }}
+
+                            </td>
+
+                            <td @class([
+                                'text-right font-semibold',
+                                'text-violet-700' => $row['advance'] > 0,
+                                'text-slate-400' => $row['advance'] <= 0,
+                            ]) data-label="Advance">
+
+                                {{ $row['advance'] > 0 ? number_format($row['advance'], 2) : '—' }}
+
+                            </td>
+
+                        </tr>
+
+                    @endforeach
+
+                </tbody>
+
+            </x-data-table-card>
+
+        </div>
+
+    </x-reports.print-shell>
 
 
 
     <script type="application/json" id="outstanding-report-chart">@json($chart)</script>
 
 </x-app-layout>
-

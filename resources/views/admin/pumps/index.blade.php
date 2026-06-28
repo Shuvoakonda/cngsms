@@ -34,6 +34,7 @@
                             <th>Contact</th>
                             <th>Credit Limit</th>
                             <th>Outstanding</th>
+                            <th>Advance</th>
                             <th>Status</th>
                             <th class="text-right">Actions</th>
                         </tr>
@@ -41,7 +42,10 @@
                     <tbody>
                         @forelse ($pumps as $pump)
                             @php
-                                $outstanding = round((float) $pump->opening_balance + (float) $pump->purchases_total - (float) $pump->payments_total, 2);
+                                $purchasesTotal = (float) $pump->purchases_total;
+                                $paymentsTotal = (float) $pump->payments_total;
+                                $due = $pump->dueAmount($purchasesTotal, $paymentsTotal);
+                                $advance = $pump->advanceBalance($purchasesTotal, $paymentsTotal);
                             @endphp
                             <tr>
                                 <td class="col-primary" data-label="Pump">
@@ -57,9 +61,18 @@
                                 <td data-label="Credit Limit">{{ number_format((float) $pump->credit_limit, 2) }}</td>
                                 <td @class([
                                     'font-medium',
-                                    'text-rose-700' => $pump->credit_limit > 0 && $outstanding > $pump->credit_limit,
-                                    'text-slate-900' => ! ($pump->credit_limit > 0 && $outstanding > $pump->credit_limit),
-                                ]) data-label="Outstanding">{{ number_format($outstanding, 2) }}</td>
+                                    'text-rose-700' => $due > 0 && $pump->credit_limit > 0 && $due > $pump->credit_limit,
+                                    'text-slate-900' => ! ($due > 0 && $pump->credit_limit > 0 && $due > $pump->credit_limit),
+                                ]) data-label="Outstanding">
+                                    {{ $due > 0 ? number_format($due, 2) : '—' }}
+                                </td>
+                                <td @class([
+                                    'font-medium',
+                                    'text-violet-700' => $advance > 0,
+                                    'text-slate-400' => $advance <= 0,
+                                ]) data-label="Advance">
+                                    {{ $advance > 0 ? number_format($advance, 2) : '—' }}
+                                </td>
                                 <td data-label="Status">
                                     <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium {{ $pump->status === \App\Enums\PumpStatus::Active ? 'bg-teal-50 text-teal-700 ring-1 ring-teal-100' : 'bg-slate-100 text-slate-600' }}">
                                         {{ $pump->status->label() }}
@@ -79,7 +92,7 @@
                             </tr>
                         @empty
                             <tr class="data-table-empty-row">
-                                <td colspan="6" class="data-table-empty">
+                                <td colspan="7" class="data-table-empty">
                                     <p class="text-slate-500">No pumps yet.</p>
                                     <a href="{{ route('admin.pumps.index', ['create' => 1]) }}" class="mt-3 inline-block text-sm font-medium text-teal-700 hover:underline">Add your first pump</a>
                                 </td>
@@ -97,6 +110,7 @@
                             <th>Contact</th>
                             <th>Credit Limit</th>
                             <th>Outstanding</th>
+                            <th>Advance</th>
                             <th>Deleted At</th>
                             <th class="text-right">Actions</th>
                         </tr>
@@ -104,7 +118,10 @@
                     <tbody>
                         @forelse ($trashedPumps as $pump)
                             @php
-                                $outstanding = round((float) $pump->opening_balance + (float) $pump->purchases_total - (float) $pump->payments_total, 2);
+                                $purchasesTotal = (float) $pump->purchases_total;
+                                $paymentsTotal = (float) $pump->payments_total;
+                                $due = $pump->dueAmount($purchasesTotal, $paymentsTotal);
+                                $advance = $pump->advanceBalance($purchasesTotal, $paymentsTotal);
                             @endphp
                             <tr>
                                 <td class="col-primary" data-label="Pump">
@@ -120,9 +137,18 @@
                                 <td data-label="Credit Limit">{{ number_format((float) $pump->credit_limit, 2) }}</td>
                                 <td @class([
                                     'font-medium',
-                                    'text-rose-700' => $pump->credit_limit > 0 && $outstanding > $pump->credit_limit,
-                                    'text-slate-900' => ! ($pump->credit_limit > 0 && $outstanding > $pump->credit_limit),
-                                ]) data-label="Outstanding">{{ number_format($outstanding, 2) }}</td>
+                                    'text-rose-700' => $due > 0 && $pump->credit_limit > 0 && $due > $pump->credit_limit,
+                                    'text-slate-900' => ! ($due > 0 && $pump->credit_limit > 0 && $due > $pump->credit_limit),
+                                ]) data-label="Outstanding">
+                                    {{ $due > 0 ? number_format($due, 2) : '—' }}
+                                </td>
+                                <td @class([
+                                    'font-medium',
+                                    'text-violet-700' => $advance > 0,
+                                    'text-slate-400' => $advance <= 0,
+                                ]) data-label="Advance">
+                                    {{ $advance > 0 ? number_format($advance, 2) : '—' }}
+                                </td>
                                 <td data-label="Deleted At">
                                     <span class="text-slate-600 text-sm">{{ $pump->deleted_at->format('d M Y, h:i A') }}</span>
                                 </td>
@@ -137,7 +163,7 @@
                             </tr>
                         @empty
                             <tr class="data-table-empty-row">
-                                <td colspan="6" class="data-table-empty">
+                                <td colspan="7" class="data-table-empty">
                                     <p class="text-slate-500">No deleted pumps found.</p>
                                 </td>
                             </tr>

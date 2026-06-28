@@ -23,8 +23,9 @@
 
     <div class="grid gap-4 sm:grid-cols-2">
         <div class="form-field">
-            <x-input-label for="pump_opening_balance" value="Opening Balance" />
+            <x-input-label for="pump_opening_balance" value="Opening Due" />
             <x-text-input id="pump_opening_balance" name="opening_balance" type="number" step="0.01" min="0" :value="old('opening_balance', '0')" required inputmode="decimal" />
+            <p class="mt-1 text-xs text-slate-500">Amount you already owed this pump when adding it.</p>
             <x-input-error :messages="$errors->get('opening_balance')" />
         </div>
 

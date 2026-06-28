@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
             'address' => 'Dhaka, Bangladesh',
             'currency' => 'BDT',
             'date_format' => 'd-m-Y',
-            'quantity_unit' => 'M3',
+            'quantity_unit' => 'KG',
         ]);
 
         User::query()->create([
@@ -41,6 +41,6 @@ class DatabaseSeeder extends Seeder
             'status' => UserStatus::Active,
         ]);
 
-        // $this->call(DashboardDemoSeeder::class);
+        $this->call(DashboardDemoSeeder::class);
     }
 }

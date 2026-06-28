@@ -14,20 +14,6 @@
 
 
 
-    <x-reports.print-header
-
-        title="Daily Purchase Report"
-
-        :meta="collect([
-
-            ($filters['date_from'] ?? null) || ($filters['date_to'] ?? null) ? 'Period: '.($filters['date_from'] ?? 'Start').' to '.($filters['date_to'] ?? 'Today') : null,
-
-        ])->filter()->implode(' | ')"
-
-    />
-
-
-
     <x-reports.filter-card
 
         :action="route('reports.daily-purchases')"
@@ -106,7 +92,21 @@
 
 
 
-    <x-data-table-card class="report-print-body">
+    <x-reports.print-shell
+
+        title="Daily Purchase Report"
+
+        :meta="collect([
+
+            ($filters['date_from'] ?? null) || ($filters['date_to'] ?? null) ? 'Period: '.($filters['date_from'] ?? 'Start').' to '.($filters['date_to'] ?? 'Today') : null,
+
+        ])->filter()->implode(' | ')"
+
+        :summary="'Total amount: '.number_format($totals['amount'], 2).' '.$company->currency"
+
+    >
+
+        <x-data-table-card class="report-print-body">
 
         <thead>
 
@@ -166,9 +166,7 @@
 
     </x-data-table-card>
 
-
-
-    <x-reports.print-footer :summary="'Total amount: '.number_format($totals['amount'], 2).' '.$company->currency" />
+    </x-reports.print-shell>
 
 </x-app-layout>
 

@@ -75,6 +75,7 @@ class ReportService
             'month' => $month,
             'byPump' => $byPump,
             'byVehicle' => $byVehicle,
+            'byPumpDriver' => $this->driverEntriesByPump(['month' => $month]),
             'totals' => [
                 'count' => $purchases->count(),
                 'quantity' => round((float) $purchases->sum('quantity'), 2),
@@ -84,23 +85,85 @@ class ReportService
     }
 
     /**
+     * @param  array<string, mixed>  $filters
+     * @return Collection<int, array<string, mixed>>
+     */
+    public function driverEntriesByPump(array $filters): Collection
+    {
+        $query = Purchase::query()
+            ->with(['pump:id,name', 'driver:id,name']);
+
+        if (! empty($filters['month'])) {
+            [$year, $monthNum] = explode('-', $filters['month']);
+            $query->whereYear('purchase_date', (int) $year)
+                ->whereMonth('purchase_date', (int) $monthNum);
+        } else {
+            $this->applyPurchaseFilters($query, $filters);
+        }
+
+        return $query->get()
+            ->groupBy(fn (Purchase $purchase) => $purchase->pump_id.'|'.($purchase->driver_id ?? 'guest'))
+            ->map(function (Collection $items) {
+                $first = $items->first();
+
+                return [
+                    'pump' => $first?->pump?->name ?? 'Unknown',
+                    'driver' => $first?->displayDriver() ?? 'Guest',
+                    'count' => $items->count(),
+                    'quantity' => round((float) $items->sum('quantity'), 2),
+                    'amount' => round((float) $items->sum('amount'), 2),
+                ];
+            })
+            ->sortBy([
+                ['pump', 'asc'],
+                ['driver', 'asc'],
+            ])
+            ->values();
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function pumpLedger(int $pumpId, ?string $dateFrom, ?string $dateTo): array
     {
         $pump = Pump::withTrashed()->findOrFail($pumpId);
-        $running = (float) $pump->opening_balance;
+        $running = 0.0;
+        $entries = collect();
 
-        $entries = collect([
-            [
+        if ((float) $pump->opening_balance > 0) {
+            $running = round($running + (float) $pump->opening_balance, 2);
+            $entries->push([
+                'date' => null,
+                'reference' => 'OPENING',
+                'description' => 'Opening due',
+                'debit' => (float) $pump->opening_balance,
+                'credit' => 0.0,
+                'balance' => $running,
+            ]);
+        }
+
+        if ((float) $pump->opening_advance > 0) {
+            $running = round($running - (float) $pump->opening_advance, 2);
+            $entries->push([
+                'date' => null,
+                'reference' => 'OPENING',
+                'description' => 'Opening advance',
+                'debit' => 0.0,
+                'credit' => (float) $pump->opening_advance,
+                'balance' => $running,
+            ]);
+        }
+
+        if ($entries->isEmpty()) {
+            $entries->push([
                 'date' => null,
                 'reference' => 'OPENING',
                 'description' => 'Opening balance',
-                'debit' => $running > 0 ? $running : 0,
-                'credit' => $running < 0 ? abs($running) : 0,
-                'balance' => $running,
-            ],
-        ]);
+                'debit' => 0.0,
+                'credit' => 0.0,
+                'balance' => 0.0,
+            ]);
+        }
 
         $purchases = Purchase::query()
             ->with('vehicle:id,vehicle_number')
@@ -131,10 +194,10 @@ class ReportService
                 'sort_date' => $payment->payment_date->format('Y-m-d'),
                 'date' => $payment->payment_date->format('d M Y'),
                 'reference' => $payment->voucher_number,
-                'description' => 'Payment — '.$payment->payment_method->label(),
+                'description' => $payment->type->label().' — '.$payment->payment_method->label(),
                 'debit' => 0.0,
                 'credit' => (float) $payment->amount,
-                'type' => 'payment',
+                'type' => $payment->type->value,
             ]);
 
         $transactions = $purchases->concat($payments)->sortBy([
@@ -162,33 +225,52 @@ class ReportService
     }
 
     /**
+     * @param  array<string, mixed>  $filters
      * @return Collection<int, array<string, mixed>>
      */
-    public function outstandingReport(): Collection
+    public function outstandingReport(array $filters = []): Collection
     {
+        $hasDateFilter = ! empty($filters['date_from']) || ! empty($filters['date_to']);
+
         return Pump::withTrashed()
-            ->withSum('purchases as purchases_total', 'amount')
-            ->withSum('payments as payments_total', 'amount')
+            ->withSum(['purchases as purchases_total' => fn ($query) => $this->applyTransactionDateFilters($query, $filters, 'purchase_date')], 'amount')
+            ->withSum(['payments as payments_total' => fn ($query) => $this->applyTransactionDateFilters($query, $filters, 'payment_date')], 'amount')
+            ->withCount(['purchases as entry_count' => fn ($query) => $this->applyTransactionDateFilters($query, $filters, 'purchase_date')])
             ->orderBy('name')
             ->get()
             ->map(function (Pump $pump) {
                 $purchases = (float) $pump->purchases_total;
                 $payments = (float) $pump->payments_total;
-                $due = round((float) $pump->opening_balance + $purchases - $payments, 2);
 
                 return [
                     'pump' => $pump->name,
+                    'entries' => (int) $pump->entry_count,
                     'opening_balance' => (float) $pump->opening_balance,
+                    'opening_advance' => (float) $pump->opening_advance,
                     'total_purchase' => $purchases,
                     'total_payment' => $payments,
-                    'due' => $due,
+                    'due' => $pump->dueAmount($purchases, $payments),
+                    'advance' => $pump->advanceBalance($purchases, $payments),
                     'credit_limit' => (float) $pump->credit_limit,
-                    'over_limit' => $pump->credit_limit > 0 && $due > $pump->credit_limit,
+                    'over_limit' => $pump->credit_limit > 0 && $pump->dueAmount($purchases, $payments) > $pump->credit_limit,
                     'trashed' => $pump->trashed(),
                 ];
             })
-            ->filter(fn ($row) => ! $row['trashed'] || $row['due'] != 0)
-            ->sortByDesc('due')
+            ->filter(function (array $row) use ($hasDateFilter) {
+                if ($row['trashed']) {
+                    return $row['due'] != 0 || $row['advance'] != 0;
+                }
+
+                if (! $hasDateFilter) {
+                    return true;
+                }
+
+                return $row['entries'] > 0
+                    || $row['total_payment'] > 0
+                    || $row['due'] > 0
+                    || $row['advance'] > 0;
+            })
+            ->sortByDesc(fn ($row) => $row['due'] > 0 ? $row['due'] : -$row['advance'])
             ->values();
     }
 
@@ -272,6 +354,21 @@ class ReportService
                 'amount' => round((float) $rows->sum('amount'), 2),
             ],
         ];
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<\Illuminate\Database\Eloquent\Model>  $query
+     * @param  array<string, mixed>  $filters
+     */
+    protected function applyTransactionDateFilters($query, array $filters, string $dateColumn): void
+    {
+        if (! empty($filters['date_from'])) {
+            $query->whereDate($dateColumn, '>=', $filters['date_from']);
+        }
+
+        if (! empty($filters['date_to'])) {
+            $query->whereDate($dateColumn, '<=', $filters['date_to']);
+        }
     }
 
     /**

@@ -24,7 +24,7 @@ class Company extends Model
             'name' => 'Marwha Enterprise',
             'currency' => 'BDT',
             'date_format' => 'd-m-Y',
-            'quantity_unit' => 'M3',
+            'quantity_unit' => 'KG',
         ]);
     }
 

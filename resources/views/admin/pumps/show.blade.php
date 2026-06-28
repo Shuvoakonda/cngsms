@@ -29,9 +29,9 @@
 
         <div class="stat-card">
 
-            <p class="text-xs uppercase text-slate-500">Outstanding</p>
+            <p class="text-xs uppercase text-slate-500">{{ $outstanding < 0 ? 'Advance Balance' : 'Outstanding' }}</p>
 
-            <p @class(['mt-2 text-xl font-bold break-words sm:text-2xl', 'text-rose-700' => $pump->isOverCreditLimit(), 'text-slate-900' => ! $pump->isOverCreditLimit()])>{{ number_format($outstanding, 2) }} {{ $company->currency }}</p>
+            <p @class(['mt-2 text-xl font-bold break-words sm:text-2xl', 'text-violet-700' => $outstanding < 0, 'text-rose-700' => $outstanding > 0 && $pump->isOverCreditLimit(), 'text-slate-900' => $outstanding >= 0 && ! $pump->isOverCreditLimit()])>{{ number_format(abs($outstanding), 2) }} {{ $company->currency }}</p>
 
         </div>
 
@@ -83,7 +83,9 @@
 
                 <div class="detail-row"><dt>Mobile</dt><dd>{{ $pump->mobile ?: '—' }}</dd></div>
 
-                <div class="detail-row"><dt>Opening Balance</dt><dd>{{ number_format((float) $pump->opening_balance, 2) }} {{ $company->currency }}</dd></div>
+                <div class="detail-row"><dt>Opening Due</dt><dd>{{ number_format((float) $pump->opening_balance, 2) }} {{ $company->currency }}</dd></div>
+
+                <div class="detail-row"><dt>Opening Advance</dt><dd>{{ number_format((float) $pump->opening_advance, 2) }} {{ $company->currency }}</dd></div>
 
                 <div class="detail-row"><dt>Created</dt><dd>{{ $pump->created_at?->format('d M Y') }}</dd></div>
 
@@ -101,6 +103,8 @@
 
                     <th>Date</th>
 
+                    <th>Type</th>
+
                     <th>Voucher</th>
 
                     <th class="text-right">Amount</th>
@@ -117,6 +121,14 @@
 
                         <td data-label="Date">{{ $payment->payment_date->format('d M Y') }}</td>
 
+                        <td data-label="Type">
+                            <span @class([
+                                'inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium',
+                                'bg-violet-50 text-violet-700 ring-1 ring-violet-100' => $payment->type === \App\Enums\PaymentType::Advance,
+                                'bg-teal-50 text-teal-700 ring-1 ring-teal-100' => $payment->type === \App\Enums\PaymentType::Payment,
+                            ])>{{ $payment->type->label() }}</span>
+                        </td>
+
                         <td class="col-primary font-mono" data-label="Voucher"><a href="{{ route('payments.index', ['edit' => $payment->id]) }}" class="text-teal-700 hover:underline">{{ $payment->voucher_number }}</a></td>
 
                         <td class="text-right font-medium" data-label="Amount">{{ number_format((float) $payment->amount, 2) }}</td>
@@ -127,7 +139,7 @@
 
                     <tr class="data-table-empty-row">
 
-                        <td colspan="3" class="data-table-empty">No payments recorded.</td>
+                        <td colspan="4" class="data-table-empty">No payments recorded.</td>
 
                     </tr>
 

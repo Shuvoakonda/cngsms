@@ -11,7 +11,7 @@
             ['Daily Purchases', 'Purchase slips by date, pump, and vehicle.', 'reports.daily-purchases'],
             ['Monthly Summary', 'Pump and vehicle totals for a selected month.', 'reports.monthly-purchases'],
             ['Pump Ledger', 'Debit/credit statement with running balance.', 'reports.pump-ledger'],
-            ['Outstanding Due', 'Amount owed to each pump.', 'reports.outstanding'],
+            ['Pump Summary', 'Entries, due, and advance balance per pump.', 'reports.outstanding'],
             ['Vehicle-wise', 'Purchase totals grouped by vehicle.', 'reports.vehicle-wise'],
             ['Driver-wise', 'Purchase totals grouped by driver.', 'reports.driver-wise'],
             ['Payments', 'Payment vouchers by date and pump.', 'reports.payments'],

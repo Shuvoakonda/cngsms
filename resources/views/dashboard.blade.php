@@ -157,6 +157,7 @@
                                 <span @class([
                                     'inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium',
                                     'bg-orange-50 text-orange-700 ring-1 ring-orange-100' => $transaction['type'] === 'purchase',
+                                    'bg-violet-50 text-violet-700 ring-1 ring-violet-100' => $transaction['type'] === 'advance',
                                     'bg-teal-50 text-teal-700 ring-1 ring-teal-100' => $transaction['type'] === 'payment',
                                 ])>
                                     {{ ucfirst($transaction['type']) }}
@@ -194,7 +195,7 @@
                             <div class="min-w-0 flex-1">
                                 <p class="truncate font-medium text-slate-900">{{ $pump['pump'] }}</p>
                                 <p class="mt-1 text-xs text-slate-500">
-                                    {{ number_format($pump['quantity'], 2) }} {{ $company->quantity_unit ?? 'M3' }}
+                                    {{ number_format($pump['quantity'], 2) }} {{ $company->quantity_unit ?? 'KG' }}
                                     · {{ $pump['count'] }} slip{{ $pump['count'] === 1 ? '' : 's' }}
                                 </p>
                             </div>

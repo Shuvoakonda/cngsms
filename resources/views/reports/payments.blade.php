@@ -8,10 +8,6 @@
 
 
 
-    <x-reports.print-header title="Payment Report" />
-
-
-
     <x-reports.filter-card
 
         :action="route('reports.payments')"
@@ -54,13 +50,17 @@
 
 
 
-    <x-data-table-card class="report-print-body">
+    <x-reports.print-shell title="Payment Report" :summary="'Total amount: '.number_format($totals['amount'], 2).' '.$company->currency">
+
+        <x-data-table-card class="report-print-body">
 
         <thead>
 
             <tr>
 
                 <th>Date</th>
+
+                <th>Type</th>
 
                 <th>Voucher</th>
 
@@ -82,6 +82,8 @@
 
                     <td data-label="Date">{{ $row->payment_date->format('d M Y') }}</td>
 
+                    <td data-label="Type">{{ $row->type->label() }}</td>
+
                     <td class="col-primary font-mono" data-label="Voucher">{{ $row->voucher_number }}</td>
 
                     <td data-label="Pump">{{ $row->pump?->name }}</td>
@@ -96,7 +98,7 @@
 
                 <tr class="data-table-empty-row">
 
-                    <td colspan="5" class="data-table-empty">No records.</td>
+                    <td colspan="6" class="data-table-empty">No records.</td>
 
                 </tr>
 
@@ -106,9 +108,7 @@
 
     </x-data-table-card>
 
-
-
-    <x-reports.print-footer :summary="'Total amount: '.number_format($totals['amount'], 2).' '.$company->currency" />
+    </x-reports.print-shell>
 
 </x-app-layout>
 

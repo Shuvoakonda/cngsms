@@ -8,10 +8,6 @@
 
 
 
-    <x-reports.print-header title="Driver-wise Purchase Report" />
-
-
-
     <x-reports.filter-card
 
         :action="route('reports.driver-wise')"
@@ -28,7 +24,9 @@
 
 
 
-    <x-data-table-card class="report-print-body">
+    <x-reports.print-shell title="Driver-wise Purchase Report" :summary="'Total amount: '.number_format($rows->sum('amount'), 2).' '.$company->currency">
+
+        <x-data-table-card class="report-print-body">
 
         <thead>
 
@@ -74,7 +72,9 @@
 
 
 
-    <x-reports.print-footer :summary="'Total amount: '.number_format($rows->sum('amount'), 2).' '.$company->currency" />
+        <x-reports.partials.driver-entries-by-pump :rows="$driverByPump" class="report-print-body mt-6" />
+
+    </x-reports.print-shell>
 
 </x-app-layout>
 

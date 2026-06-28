@@ -35,11 +35,12 @@ class DashboardService
 
     public function totalOutstanding(): float
     {
-        $opening = (float) Pump::withTrashed()->sum('opening_balance');
+        $openingDue = (float) Pump::withTrashed()->sum('opening_balance');
+        $openingAdvance = (float) Pump::withTrashed()->sum('opening_advance');
         $purchases = (float) Purchase::query()->sum('amount');
         $payments = (float) Payment::query()->sum('amount');
 
-        return round($opening + $purchases - $payments, 2);
+        return round($openingDue - $openingAdvance + $purchases - $payments, 2);
     }
 
     /**
@@ -80,7 +81,10 @@ class DashboardService
             ->get()
             ->map(fn (Pump $pump) => [
                 'name' => $pump->name,
-                'outstanding' => round((float) $pump->opening_balance + (float) $pump->purchases_total - (float) $pump->payments_total, 2),
+                'outstanding' => $pump->outstandingAmount(
+                    (float) $pump->purchases_total,
+                    (float) $pump->payments_total,
+                ),
                 'trashed' => $pump->trashed(),
             ])
             ->filter(fn ($row) => ! $row['trashed'] || $row['outstanding'] != 0)
@@ -101,7 +105,8 @@ class DashboardService
     {
         $labels = [];
         $values = [];
-        $opening = (float) Pump::withTrashed()->sum('opening_balance');
+        $openingDue = (float) Pump::withTrashed()->sum('opening_balance');
+        $openingAdvance = (float) Pump::withTrashed()->sum('opening_advance');
 
         for ($i = $months - 1; $i >= 0; $i--) {
             $date = now()->subMonths($i)->endOfMonth();
@@ -115,7 +120,7 @@ class DashboardService
                 ->whereDate('payment_date', '<=', $date)
                 ->sum('amount');
 
-            $values[] = round($opening + $purchases - $payments, 2);
+            $values[] = round($openingDue - $openingAdvance + $purchases - $payments, 2);
         }
 
         return compact('labels', 'values');
@@ -149,7 +154,7 @@ class DashboardService
             ->limit($limit)
             ->get()
             ->map(fn (Payment $payment) => [
-                'type' => 'payment',
+                'type' => $payment->type === \App\Enums\PaymentType::Advance ? 'advance' : 'payment',
                 'date' => $payment->payment_date->format('Y-m-d'),
                 'label' => $payment->voucher_number,
                 'pump' => $payment->pump?->name,
@@ -197,9 +202,9 @@ class DashboardService
         $alerts = collect();
 
         foreach ($this->pumpsOverCreditLimit() as $pump) {
-            $outstanding = round(
-                (float) $pump->opening_balance + (float) $pump->purchases_total - (float) $pump->payments_total,
-                2
+            $outstanding = $pump->outstandingAmount(
+                (float) $pump->purchases_total,
+                (float) $pump->payments_total,
             );
 
             $alerts->push([
@@ -236,12 +241,10 @@ class DashboardService
             ->withSum('payments as payments_total', 'amount')
             ->get()
             ->filter(function (Pump $pump) {
-                $outstanding = round(
-                    (float) $pump->opening_balance + (float) $pump->purchases_total - (float) $pump->payments_total,
-                    2
-                );
-
-                return $outstanding > (float) $pump->credit_limit;
+                return $pump->outstandingAmount(
+                    (float) $pump->purchases_total,
+                    (float) $pump->payments_total,
+                ) > (float) $pump->credit_limit;
             })
             ->values();
     }

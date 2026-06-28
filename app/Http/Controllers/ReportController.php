@@ -64,15 +64,22 @@ class ReportController extends Controller
         ]);
     }
 
-    public function outstanding(): View
+    public function outstanding(Request $request): View
     {
-        $rows = $this->reports->outstandingReport();
+        $filters = $request->only(['date_from', 'date_to']);
+        $rows = $this->reports->outstandingReport($filters);
 
         return view('reports.outstanding', [
+            'filters' => $filters,
             'rows' => $rows,
+            'totals' => [
+                'entries' => $rows->sum('entries'),
+                'due' => round($rows->sum('due'), 2),
+                'advance' => round($rows->sum('advance'), 2),
+            ],
             'chart' => [
-                'labels' => $rows->pluck('pump')->take(10)->all(),
-                'values' => $rows->pluck('due')->take(10)->all(),
+                'labels' => $rows->where('due', '>', 0)->pluck('pump')->take(10)->values()->all(),
+                'values' => $rows->where('due', '>', 0)->pluck('due')->take(10)->values()->all(),
             ],
         ]);
     }
@@ -81,16 +88,18 @@ class ReportController extends Controller
     {
         $filters = $request->only(['date_from', 'date_to']);
         $rows = $this->reports->vehicleWise($filters);
+        $driverByPump = $this->reports->driverEntriesByPump($filters);
 
-        return view('reports.vehicle-wise', compact('filters', 'rows'));
+        return view('reports.vehicle-wise', compact('filters', 'rows', 'driverByPump'));
     }
 
     public function driverWise(Request $request): View
     {
         $filters = $request->only(['date_from', 'date_to']);
         $rows = $this->reports->driverWise($filters);
+        $driverByPump = $this->reports->driverEntriesByPump($filters);
 
-        return view('reports.driver-wise', compact('filters', 'rows'));
+        return view('reports.driver-wise', compact('filters', 'rows', 'driverByPump'));
     }
 
     public function payments(Request $request): View
@@ -152,6 +161,11 @@ class ReportController extends Controller
             'Entries' => $row['count'],
             'Quantity' => $row['quantity'],
             'Amount' => $row['amount'],
+        ]))->concat($report['byPumpDriver']->map(fn ($row) => [
+            'Pump' => 'Driver @ '.$row['pump'].': '.$row['driver'],
+            'Entries' => $row['count'],
+            'Quantity' => $row['quantity'],
+            'Amount' => $row['amount'],
         ]))->values();
 
         return $this->excel->download(
@@ -194,25 +208,30 @@ class ReportController extends Controller
         );
     }
 
-    public function exportOutstanding(): StreamedResponse
+    public function exportOutstanding(Request $request): StreamedResponse
     {
-        $rows = $this->reports->outstandingReport();
+        $filters = $request->only(['date_from', 'date_to']);
+        $rows = $this->reports->outstandingReport($filters);
         $company = Company::current();
 
         return $this->excel->download(
-            'outstanding-due.xlsx',
-            'Outstanding Due Report',
-            ['Pump', 'Opening', 'Purchase', 'Payment', 'Due'],
+            'pump-summary.xlsx',
+            'Pump Summary Report',
+            ['Pump', 'Entries', 'Purchase', 'Payment', 'Due', 'Advance'],
             $rows->map(fn ($row) => [
                 $row['pump'],
-                $row['opening_balance'],
+                $row['entries'],
                 $row['total_purchase'],
                 $row['total_payment'],
                 $row['due'],
+                $row['advance'],
             ])->all(),
-            $this->filterMeta([], ['As of' => now()->format('d M Y')]),
-            ['Total Due' => number_format($rows->sum('due'), 2).' '.$company->currency],
-            [2, 3, 4, 5],
+            $this->filterMeta($filters, ['As of' => now()->format('d M Y')]),
+            [
+                'Total Due' => number_format($rows->sum('due'), 2).' '.$company->currency,
+                'Total Advance' => number_format($rows->sum('advance'), 2).' '.$company->currency,
+            ],
+            [3, 4, 5, 6],
         );
     }
 
@@ -220,13 +239,26 @@ class ReportController extends Controller
     {
         $filters = $request->only(['date_from', 'date_to']);
         $rows = $this->reports->vehicleWise($filters);
+        $driverByPump = $this->reports->driverEntriesByPump($filters);
         $company = Company::current();
+
+        $exportRows = $rows->map(fn ($row) => [
+            'Vehicle: '.$row['vehicle'],
+            $row['count'],
+            $row['quantity'],
+            $row['amount'],
+        ])->concat($driverByPump->map(fn ($row) => [
+            $row['pump'].' — '.$row['driver'],
+            $row['count'],
+            $row['quantity'],
+            $row['amount'],
+        ]))->values();
 
         return $this->excel->download(
             'vehicle-wise.xlsx',
             'Vehicle-wise Purchase Report',
-            ['Vehicle', 'Entries', 'Quantity', 'Amount'],
-            $rows->map(fn ($row) => [$row['vehicle'], $row['count'], $row['quantity'], $row['amount']])->all(),
+            ['Group', 'Entries', 'Quantity', 'Amount'],
+            $exportRows->all(),
             $this->filterMeta($filters),
             [
                 'Entries' => $rows->sum(fn ($row) => $row['count']),
@@ -240,13 +272,26 @@ class ReportController extends Controller
     {
         $filters = $request->only(['date_from', 'date_to']);
         $rows = $this->reports->driverWise($filters);
+        $driverByPump = $this->reports->driverEntriesByPump($filters);
         $company = Company::current();
+
+        $exportRows = $rows->map(fn ($row) => [
+            'Driver: '.$row['driver'],
+            $row['count'],
+            $row['quantity'],
+            $row['amount'],
+        ])->concat($driverByPump->map(fn ($row) => [
+            $row['pump'].' — '.$row['driver'],
+            $row['count'],
+            $row['quantity'],
+            $row['amount'],
+        ]))->values();
 
         return $this->excel->download(
             'driver-wise.xlsx',
             'Driver-wise Purchase Report',
-            ['Driver', 'Entries', 'Quantity', 'Amount'],
-            $rows->map(fn ($row) => [$row['driver'], $row['count'], $row['quantity'], $row['amount']])->all(),
+            ['Group', 'Entries', 'Quantity', 'Amount'],
+            $exportRows->all(),
             $this->filterMeta($filters),
             [
                 'Entries' => $rows->sum(fn ($row) => $row['count']),
@@ -265,9 +310,10 @@ class ReportController extends Controller
         return $this->excel->download(
             'payments.xlsx',
             'Payment Report',
-            ['Date', 'Voucher', 'Pump', 'Method', 'Amount'],
+            ['Date', 'Type', 'Voucher', 'Pump', 'Method', 'Amount'],
             $report['rows']->map(fn ($row) => [
                 $row->payment_date->format('Y-m-d'),
+                $row->type->label(),
                 $row->voucher_number,
                 $row->pump?->name,
                 $row->payment_method->label(),
@@ -278,7 +324,7 @@ class ReportController extends Controller
                 'Payments' => $report['totals']['count'],
                 'Amount' => number_format($report['totals']['amount'], 2).' '.$company->currency,
             ],
-            [5],
+            [6],
         );
     }
 

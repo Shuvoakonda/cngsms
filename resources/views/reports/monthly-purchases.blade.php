@@ -2,13 +2,9 @@
 
     <x-slot name="header">
 
-        <div><h1 class="text-2xl font-bold text-slate-900">Monthly Purchase Summary</h1><p class="mt-1 text-sm text-slate-600">Totals by pump and vehicle for the selected month.</p></div>
+        <div><h1 class="text-2xl font-bold text-slate-900">Monthly Purchase Summary</h1><p class="mt-1 text-sm text-slate-600">Totals by pump, vehicle, and driver entries per pump for the selected month.</p></div>
 
     </x-slot>
-
-
-
-    <x-reports.print-header title="Monthly Purchase Summary" :meta="'Month: '.$filters['month']" />
 
 
 
@@ -40,7 +36,9 @@
 
 
 
-    <div class="report-print-body grid gap-6 lg:grid-cols-2">
+    <x-reports.print-shell title="Monthly Purchase Summary" :meta="'Month: '.$filters['month']" :summary="'Total amount: '.number_format($report['totals']['amount'], 2).' '.$company->currency">
+
+        <div class="report-print-body grid gap-6 lg:grid-cols-2">
 
         <div class="data-table-card">
 
@@ -55,6 +53,8 @@
                         <tr>
 
                             <th>Pump</th>
+
+                            <th class="text-right">Entries</th>
 
                             <th class="text-right">Qty</th>
 
@@ -72,6 +72,8 @@
 
                                 <td class="col-primary" data-label="Pump">{{ $row['label'] }}</td>
 
+                                <td class="text-right" data-label="Entries">{{ $row['count'] }}</td>
+
                                 <td class="text-right" data-label="Qty">{{ number_format($row['quantity'], 2) }}</td>
 
                                 <td class="text-right font-medium" data-label="Amount">{{ number_format($row['amount'], 2) }}</td>
@@ -80,7 +82,7 @@
 
                         @empty
 
-                            <tr class="data-table-empty-row"><td colspan="3" class="data-table-empty">No data.</td></tr>
+                            <tr class="data-table-empty-row"><td colspan="4" class="data-table-empty">No data.</td></tr>
 
                         @endforelse
 
@@ -106,6 +108,8 @@
 
                             <th>Vehicle</th>
 
+                            <th class="text-right">Entries</th>
+
                             <th class="text-right">Qty</th>
 
                             <th class="text-right">Amount</th>
@@ -122,6 +126,8 @@
 
                                 <td class="col-primary" data-label="Vehicle">{{ $row['label'] }}</td>
 
+                                <td class="text-right" data-label="Entries">{{ $row['count'] }}</td>
+
                                 <td class="text-right" data-label="Qty">{{ number_format($row['quantity'], 2) }}</td>
 
                                 <td class="text-right font-medium" data-label="Amount">{{ number_format($row['amount'], 2) }}</td>
@@ -130,7 +136,7 @@
 
                         @empty
 
-                            <tr class="data-table-empty-row"><td colspan="3" class="data-table-empty">No data.</td></tr>
+                            <tr class="data-table-empty-row"><td colspan="4" class="data-table-empty">No data.</td></tr>
 
                         @endforelse
 
@@ -146,7 +152,9 @@
 
 
 
-    <x-reports.print-footer :summary="'Total amount: '.number_format($report['totals']['amount'], 2).' '.$company->currency" />
+    <x-reports.partials.driver-entries-by-pump :rows="$report['byPumpDriver']" class="report-print-body mt-6" />
+
+    </x-reports.print-shell>
 
 </x-app-layout>
 

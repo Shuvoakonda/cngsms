@@ -62,6 +62,7 @@ class PaymentController extends Controller
             'defaults' => [
                 'payment_date' => now()->toDateString(),
                 'pump_id' => '',
+                'type' => \App\Enums\PaymentType::Payment->value,
                 'voucher_number' => '',
                 'payment_method' => \App\Enums\PaymentMethod::Cash->value,
                 'amount' => '',
@@ -72,6 +73,7 @@ class PaymentController extends Controller
             'id' => $payment->id,
             'payment_date' => $payment->payment_date->toDateString(),
             'pump_id' => (string) $payment->pump_id,
+            'type' => $payment->type->value,
             'voucher_number' => $payment->voucher_number,
             'payment_method' => $payment->payment_method->value,
             'amount' => (string) $payment->amount,

@@ -66,9 +66,9 @@ class PumpController extends Controller
         $pump->loadSum('purchases as purchases_total', 'amount')
             ->loadSum('payments as payments_total', 'amount');
 
-        $outstanding = round(
-            (float) $pump->opening_balance + (float) $pump->purchases_total - (float) $pump->payments_total,
-            2,
+        $outstanding = $pump->outstandingAmount(
+            (float) $pump->purchases_total,
+            (float) $pump->payments_total,
         );
 
         return view('admin.pumps.show', [

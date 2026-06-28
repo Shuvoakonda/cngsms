@@ -196,6 +196,19 @@
         @apply inline-flex h-6 w-6 items-center justify-center text-slate-300;
     }
 
+    .report-print-layout > thead,
+    .report-print-layout > tfoot {
+        @apply hidden;
+    }
+
+    .report-print-layout,
+    .report-print-layout > tbody,
+    .report-print-layout > tbody > tr,
+    .report-print-layout-slot {
+        display: block;
+        width: 100%;
+    }
+
     @media (max-width: 767px) {
         .data-table-scroll {
             @apply overflow-visible;
@@ -246,7 +259,13 @@
 
 @media print {
     @page {
-        margin: 14mm 10mm 18mm 10mm;
+        margin: 12mm 10mm 14mm 10mm;
+
+        @bottom-right {
+            content: 'Page ' counter(page);
+            font-size: 8pt;
+            color: #737373;
+        }
     }
 
     body {
@@ -262,56 +281,144 @@
         display: none !important;
     }
 
-    main {
+    main,
+    .max-w-7xl {
+        max-width: none !important;
         padding: 0 !important;
+        margin: 0 !important;
     }
 
-    .report-print-header,
+    [class*='lg:pl-'] {
+        padding-left: 0 !important;
+    }
+
+    .report-print-layout {
+        display: table !important;
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+
+    .report-print-layout > thead {
+        display: table-header-group !important;
+    }
+
+    .report-print-layout > tfoot {
+        display: table-footer-group !important;
+    }
+
+    .report-print-layout > tbody {
+        display: table-row-group !important;
+    }
+
+    .report-print-layout > thead > tr,
+    .report-print-layout > tfoot > tr,
+    .report-print-layout > tbody > tr {
+        display: table-row !important;
+    }
+
+    .report-print-layout-slot {
+        display: table-cell !important;
+        border: 0 !important;
+        padding: 0 !important;
+        vertical-align: top !important;
+    }
+
+    .report-print-header {
+        padding: 0 0 4mm;
+        background: #fff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .report-print-header table td {
+        border: 0 !important;
+        padding: 0 !important;
+        vertical-align: top;
+    }
+
+    .report-print-header .border-b-2 {
+        margin-top: 3mm;
+    }
+
     .report-print-footer {
-        display: block !important;
+        padding: 3mm 0 0;
+        background: #fff !important;
+        border-top: 1px solid #000 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 
-    .report-print-body {
-        break-inside: avoid;
-        box-shadow: none !important;
-        ring: none !important;
+    .report-print-footer-inner {
+        display: grid !important;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 6mm;
     }
 
-    .report-print-body table {
-        width: 100%;
-        border-collapse: collapse;
+    .report-print-footer-meta {
+        margin: 0;
+        font-size: 8pt;
+        line-height: 1.2;
+        color: #525252 !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
-    .report-print-body thead {
-        display: table-header-group;
-    }
-
-    .report-print-body th {
-        background: #e5e5e5 !important;
-        color: #000 !important;
+    .report-print-footer-summary {
+        margin: 0;
+        font-size: 8pt;
+        line-height: 1.2;
         font-weight: 700;
         text-transform: uppercase;
-        font-size: 0.7rem;
-        letter-spacing: 0.04em;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+        letter-spacing: 0.03em;
+        color: #000 !important;
+        white-space: nowrap;
+        text-align: right;
     }
 
-    .report-print-body th,
-    .report-print-body td {
-        border: 1px solid #000;
-        padding: 0.45rem 0.6rem;
-        color: #000;
+    .report-print-body,
+    .data-table-card,
+    .data-table-scroll {
+        overflow: visible !important;
+        box-shadow: none !important;
+        break-inside: auto;
+        page-break-inside: auto;
     }
 
-    .report-print-body tbody tr:nth-child(even) {
-        background: #f7f7f7 !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+    .report-print-body .data-table,
+    .data-table {
+        display: table !important;
+        width: 100% !important;
+        border-collapse: collapse !important;
+        table-layout: auto !important;
+    }
+
+    .report-print-body tbody tr {
+        break-inside: avoid;
+        page-break-inside: avoid;
     }
 
     .data-table thead {
         display: table-header-group !important;
+        position: static !important;
+        width: auto !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        clip: auto !important;
+        clip-path: none !important;
+        white-space: normal !important;
+        border: 0 !important;
+    }
+
+    .data-table tbody {
+        display: table-row-group !important;
+    }
+
+    .data-table tr {
+        display: table-row !important;
     }
 
     .data-table tbody tr {
@@ -321,14 +428,49 @@
         border-radius: 0 !important;
         box-shadow: none !important;
         padding: 0 !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
     }
 
+    .data-table th,
     .data-table td {
         display: table-cell !important;
+        position: static !important;
+        width: auto !important;
+        height: auto !important;
+        margin: 0 !important;
+        overflow: visible !important;
+        clip: auto !important;
+        clip-path: none !important;
+        white-space: normal !important;
+        flex: none !important;
+        align-items: unset !important;
+        justify-content: unset !important;
+        gap: 0 !important;
+        border: 1px solid #000 !important;
+        padding: 0.45rem 0.6rem !important;
+        color: #000 !important;
         text-align: inherit !important;
+    }
+
+    .data-table th {
+        background: #e5e5e5 !important;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        letter-spacing: 0.04em;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 
     .data-table td::before {
         content: none !important;
+        display: none !important;
+    }
+
+    .data-table tbody tr:nth-child(even) {
+        background: #f7f7f7 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 }

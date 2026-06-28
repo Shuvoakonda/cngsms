@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'contact_person',
     'mobile',
     'opening_balance',
+    'opening_advance',
     'credit_limit',
     'status',
 ])]
@@ -24,6 +25,7 @@ class Pump extends Model
     {
         return [
             'opening_balance' => 'decimal:2',
+            'opening_advance' => 'decimal:2',
             'credit_limit' => 'decimal:2',
             'status' => PumpStatus::class,
         ];
@@ -39,12 +41,33 @@ class Pump extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function outstandingAmount(?float $purchasesTotal = null, ?float $paymentsTotal = null): float
+    {
+        $purchases = $purchasesTotal ?? (float) $this->purchases()->sum('amount');
+        $payments = $paymentsTotal ?? (float) $this->payments()->sum('amount');
+
+        return round(
+            (float) $this->opening_balance
+            - (float) $this->opening_advance
+            + $purchases
+            - $payments,
+            2,
+        );
+    }
+
     public function outstanding(): float
     {
-        $purchases = (float) $this->purchases()->sum('amount');
-        $payments = (float) $this->payments()->sum('amount');
+        return $this->outstandingAmount();
+    }
 
-        return round((float) $this->opening_balance + $purchases - $payments, 2);
+    public function dueAmount(?float $purchasesTotal = null, ?float $paymentsTotal = null): float
+    {
+        return max(0, $this->outstandingAmount($purchasesTotal, $paymentsTotal));
+    }
+
+    public function advanceBalance(?float $purchasesTotal = null, ?float $paymentsTotal = null): float
+    {
+        return max(0, -$this->outstandingAmount($purchasesTotal, $paymentsTotal));
     }
 
     public function isOverCreditLimit(): bool

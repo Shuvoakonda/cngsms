@@ -10,6 +10,19 @@
             <x-input-error :messages="$errors->get('payment_date')" />
         </div>
 
+        <div class="form-field sm:col-span-2">
+            <x-input-label for="payment_type" value="Entry Type" />
+            <x-select-input id="payment_type" name="type" required>
+                @foreach (\App\Enums\PaymentType::cases() as $entryType)
+                    <option value="{{ $entryType->value }}" @selected(old('type', \App\Enums\PaymentType::Payment->value) === $entryType->value)>
+                        {{ $entryType->label() }}
+                    </option>
+                @endforeach
+            </x-select-input>
+            <p class="mt-1 text-xs text-slate-500">Use Advance when paying money to the pump before or without settling a specific purchase.</p>
+            <x-input-error :messages="$errors->get('type')" />
+        </div>
+
         <div class="form-field">
             <x-input-label for="payment_pump_id" value="Pump" />
             <x-select-input id="payment_pump_id" name="pump_id" required>

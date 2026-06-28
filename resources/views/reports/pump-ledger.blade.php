@@ -8,16 +8,6 @@
 
 
 
-    <x-reports.print-header
-
-        title="Pump Ledger"
-
-        :meta="($report['pump']?->name ?? 'All pumps').' | Closing: '.number_format($report['closing_balance'], 2).' '.$company->currency"
-
-    />
-
-
-
     <x-reports.filter-card
 
         :action="route('reports.pump-ledger')"
@@ -76,7 +66,17 @@
 
 
 
-    <x-data-table-card class="report-print-body">
+    <x-reports.print-shell
+
+        title="Pump Ledger"
+
+        :meta="($report['pump']?->name ?? 'All pumps').' | Closing: '.number_format($report['closing_balance'], 2).' '.$company->currency"
+
+        :summary="'Closing balance: '.number_format($report['closing_balance'], 2).' '.$company->currency"
+
+    >
+
+        <x-data-table-card class="report-print-body">
 
         <thead>
 
@@ -124,9 +124,7 @@
 
     </x-data-table-card>
 
-
-
-    <x-reports.print-footer :summary="'Closing balance: '.number_format($report['closing_balance'], 2).' '.$company->currency" />
+    </x-reports.print-shell>
 
 </x-app-layout>
 

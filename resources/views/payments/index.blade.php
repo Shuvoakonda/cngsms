@@ -28,6 +28,8 @@
 
             'pump_id' => '',
 
+            'type' => \App\Enums\PaymentType::Payment->value,
+
             'voucher_number' => '',
 
             'payment_method' => \App\Enums\PaymentMethod::Cash->value,
@@ -58,7 +60,7 @@
 
                 <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Payments</h1>
 
-                <p class="mt-1 text-sm text-slate-600">Record payments made to pumps.</p>
+                <p class="mt-1 text-sm text-slate-600">Record payments and advances made to pumps.</p>
 
             </div>
 
@@ -139,6 +141,8 @@
 
                     <th>Date</th>
 
+                    <th>Type</th>
+
                     <th>Voucher</th>
 
                     <th>Pump</th>
@@ -160,6 +164,14 @@
                     <tr>
 
                         <td data-label="Date">{{ $payment->payment_date->format('d M Y') }}</td>
+
+                        <td data-label="Type">
+                            <span @class([
+                                'inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium',
+                                'bg-violet-50 text-violet-700 ring-1 ring-violet-100' => $payment->type === \App\Enums\PaymentType::Advance,
+                                'bg-teal-50 text-teal-700 ring-1 ring-teal-100' => $payment->type === \App\Enums\PaymentType::Payment,
+                            ])>{{ $payment->type->label() }}</span>
+                        </td>
 
                         <td class="col-primary font-mono text-slate-900" data-label="Voucher">{{ $payment->voucher_number }}</td>
 
@@ -186,6 +198,8 @@
                                     'payment_date' => $payment->payment_date->format('Y-m-d'),
 
                                     'pump_id' => (string) $payment->pump_id,
+
+                                    'type' => $payment->type->value,
 
                                     'voucher_number' => $payment->voucher_number,
 
@@ -214,7 +228,7 @@
 
                     <tr class="data-table-empty-row">
 
-                        <td colspan="6" class="data-table-empty">No payment entries found.</td>
+                        <td colspan="7" class="data-table-empty">No payment entries found.</td>
 
                     </tr>
 

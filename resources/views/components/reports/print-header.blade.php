@@ -2,7 +2,7 @@
 
 @php($company = \App\Models\Company::current())
 
-<div class="report-print-header mb-6 hidden print:mb-6 print:block">
+<div class="report-print-header">
     <table class="w-full border-collapse">
         <tr>
             <td class="w-28 align-top pr-4">
