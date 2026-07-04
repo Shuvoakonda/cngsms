@@ -39,9 +39,9 @@
         </x-primary-button>
     </form>
 
-    <div class="mt-6 rounded-xl bg-slate-50 p-4 text-xs text-slate-600 ring-1 ring-slate-200">
+    {{-- <div class="mt-6 rounded-xl bg-slate-50 p-4 text-xs text-slate-600 ring-1 ring-slate-200">
         <p class="font-semibold text-slate-800">Demo accounts</p>
         <p class="mt-1">Admin: <span class="font-mono">admin</span> / <span class="font-mono">password</span></p>
         <p>Data Entry: <span class="font-mono">dataentry</span> / <span class="font-mono">password</span></p>
-    </div>
+    </div> --}}
 </x-guest-layout>
