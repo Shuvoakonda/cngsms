@@ -79,6 +79,10 @@ class PurchaseController extends Controller
                 'guest_reference' => '',
                 'quantity' => '',
                 'rate' => '',
+                'discount_value' => '',
+                'discount_type' => 'taka',
+                'bonus_value' => '',
+                'bonus_type' => 'taka',
                 'remarks' => '',
             ],
         ], $request, $deepLinkRecords, fn (Purchase $purchase) => [
@@ -91,6 +95,10 @@ class PurchaseController extends Controller
             'guest_reference' => $purchase->guest_reference ?? '',
             'quantity' => (string) $purchase->quantity,
             'rate' => (string) $purchase->rate,
+            'discount_value' => (string) ($purchase->discount_value ?? ''),
+            'discount_type' => $purchase->discount_type ?? 'taka',
+            'bonus_value' => (string) ($purchase->bonus_value ?? ''),
+            'bonus_type' => $purchase->bonus_type ?? 'taka',
             'remarks' => $purchase->remarks,
         ]);
 

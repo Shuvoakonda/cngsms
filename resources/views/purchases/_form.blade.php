@@ -71,6 +71,34 @@
             <x-input-error :messages="$errors->get('rate')" />
         </div>
 
+        <div class="form-field">
+            <x-input-label for="purchase_discount_value" value="Discount" />
+            <div class="grid grid-cols-[1fr_7rem] gap-2">
+                <x-text-input id="purchase_discount_value" name="discount_value" type="number" step="0.01" min="0" :value="old('discount_value')" inputmode="decimal" placeholder="Optional" @input="updateAmount()" />
+                <x-select-input id="purchase_discount_type" name="discount_type" @change="updateAmount()">
+                    <option value="taka" @selected(old('discount_type', 'taka') === 'taka')>Taka</option>
+                    <option value="percent" @selected(old('discount_type') === 'percent')>%</option>
+                </x-select-input>
+            </div>
+            <p class="mt-1 text-xs text-slate-500">Discount subtracts from total.</p>
+            <x-input-error :messages="$errors->get('discount_value')" />
+            <x-input-error :messages="$errors->get('discount_type')" />
+        </div>
+
+        <div class="form-field">
+            <x-input-label for="purchase_bonus_value" value="Bonus" />
+            <div class="grid grid-cols-[1fr_7rem] gap-2">
+                <x-text-input id="purchase_bonus_value" name="bonus_value" type="number" step="0.01" min="0" :value="old('bonus_value')" inputmode="decimal" placeholder="Optional" @input="updateAmount()" />
+                <x-select-input id="purchase_bonus_type" name="bonus_type" @change="updateAmount()">
+                    <option value="taka" @selected(old('bonus_type', 'taka') === 'taka')>Taka</option>
+                    <option value="percent" @selected(old('bonus_type') === 'percent')>%</option>
+                </x-select-input>
+            </div>
+            <p class="mt-1 text-xs text-slate-500">Bonus adds to total.</p>
+            <x-input-error :messages="$errors->get('bonus_value')" />
+            <x-input-error :messages="$errors->get('bonus_type')" />
+        </div>
+
         <div class="form-field sm:col-span-2">
             <x-input-label value="Total Amount" />
             <div class="form-control bg-slate-50 font-semibold text-slate-900" x-text="calculatedAmount"></div>

@@ -11,7 +11,10 @@ export function offcanvasCrud(config) {
             } else if (config.deepLinkEditId && config.recordsById?.[config.deepLinkEditId]) {
                 this.$nextTick(() => this.openEdit(config.recordsById[config.deepLinkEditId]));
             } else if (this.panelOpen) {
-                this.$nextTick(() => this.syncGuestPurchaseState());
+                this.$nextTick(() => {
+                    this.updateAmount();
+                    this.syncGuestPurchaseState();
+                });
             }
         },
 
@@ -120,7 +123,20 @@ export function offcanvasCrud(config) {
 
             const quantity = parseFloat(form.elements.quantity?.value) || 0;
             const rate = parseFloat(form.elements.rate?.value) || 0;
-            this.calculatedAmount = (quantity * rate).toFixed(2);
+            const baseAmount = quantity * rate;
+            const discount = this.adjustmentAmount(baseAmount, form.elements.discount_value?.value, form.elements.discount_type?.value);
+            const bonus = this.adjustmentAmount(baseAmount, form.elements.bonus_value?.value, form.elements.bonus_type?.value);
+            this.calculatedAmount = Math.max(0, baseAmount - discount + bonus).toFixed(2);
+        },
+
+        adjustmentAmount(baseAmount, value, type) {
+            const amount = parseFloat(value) || 0;
+
+            if (amount <= 0) {
+                return 0;
+            }
+
+            return type === 'percent' ? baseAmount * (amount / 100) : amount;
         },
 
         syncDriverFromVehicle(event) {

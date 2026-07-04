@@ -24,9 +24,9 @@
 
 
 
-    <x-reports.print-shell title="Vehicle-wise Purchase Report" :summary="'Total amount: '.number_format($rows->sum('amount'), 2).' '.$company->currency">
+    <x-reports.print-shell title="Vehicle-wise Purchase Report" :summary="'Total amount: '.number_format($totals['amount'], 2).' '.$company->currency">
 
-        <x-data-table-card class="report-print-body">
+        <x-data-table-card class="report-print-body" :paginator="$rows">
 
         <thead>
 
@@ -37,6 +37,10 @@
                 <th class="text-right">Entries</th>
 
                 <th class="text-right">Quantity</th>
+
+                <th class="text-right">Discount</th>
+
+                <th class="text-right">Bonus</th>
 
                 <th class="text-right">Amount</th>
 
@@ -56,13 +60,17 @@
 
                     <td class="text-right" data-label="Quantity">{{ number_format($row['quantity'], 2) }}</td>
 
+                    <td class="text-right" data-label="Discount">{{ number_format($row['discount'], 2) }}</td>
+
+                    <td class="text-right" data-label="Bonus">{{ number_format($row['bonus'], 2) }}</td>
+
                     <td class="text-right font-semibold" data-label="Amount">{{ number_format($row['amount'], 2) }}</td>
 
                 </tr>
 
             @empty
 
-                <tr class="data-table-empty-row"><td colspan="4" class="data-table-empty">No data.</td></tr>
+                <tr class="data-table-empty-row"><td colspan="6" class="data-table-empty">No data.</td></tr>
 
             @endforelse
 

@@ -92,6 +92,10 @@
 
                 <th class="text-right">Qty</th>
 
+                <th class="text-right">Discount</th>
+
+                <th class="text-right">Bonus</th>
+
                 <th class="text-right">Amount</th>
 
             </tr>
@@ -114,6 +118,10 @@
 
                     <td class="text-right" data-label="Qty">{{ number_format((float) $purchase->quantity, 2) }}</td>
 
+                    <td class="text-right" data-label="Discount">{{ $purchase->displayDiscount() }}</td>
+
+                    <td class="text-right" data-label="Bonus">{{ $purchase->displayBonus() }}</td>
+
                     <td class="text-right font-medium" data-label="Amount">{{ number_format((float) $purchase->amount, 2) }}</td>
 
                 </tr>
@@ -122,7 +130,7 @@
 
                 <tr class="data-table-empty-row">
 
-                    <td colspan="6" class="data-table-empty">No purchases recorded.</td>
+                        <td colspan="8" class="data-table-empty">No purchases recorded.</td>
 
                 </tr>
 

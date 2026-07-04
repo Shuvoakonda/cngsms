@@ -14,6 +14,8 @@
                     <th>Driver</th>
                     <th class="text-right">Entries</th>
                     <th class="text-right">Qty</th>
+                    <th class="text-right">Discount</th>
+                    <th class="text-right">Bonus</th>
                     <th class="text-right">Amount</th>
                 </tr>
             </thead>
@@ -24,14 +26,22 @@
                         <td data-label="Driver">{{ $row['driver'] }}</td>
                         <td class="text-right font-medium" data-label="Entries">{{ $row['count'] }}</td>
                         <td class="text-right" data-label="Qty">{{ number_format($row['quantity'], 2) }}</td>
+                        <td class="text-right" data-label="Discount">{{ number_format($row['discount'], 2) }}</td>
+                        <td class="text-right" data-label="Bonus">{{ number_format($row['bonus'], 2) }}</td>
                         <td class="text-right font-medium" data-label="Amount">{{ number_format($row['amount'], 2) }}</td>
                     </tr>
                 @empty
                     <tr class="data-table-empty-row">
-                        <td colspan="5" class="data-table-empty">No data for selected filters.</td>
+                        <td colspan="7" class="data-table-empty">No data for selected filters.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
+
+    @if ($rows instanceof \Illuminate\Contracts\Pagination\Paginator && $rows->hasPages())
+        <div class="data-table-footer">
+            {{ $rows->links() }}
+        </div>
+    @endif
 </div>

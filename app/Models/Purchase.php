@@ -15,6 +15,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'slip_number',
     'quantity',
     'rate',
+    'discount_value',
+    'discount_type',
+    'bonus_value',
+    'bonus_type',
     'amount',
     'remarks',
     'created_by',
@@ -29,6 +33,8 @@ class Purchase extends Model
             'purchase_date' => 'date',
             'quantity' => 'decimal:2',
             'rate' => 'decimal:2',
+            'discount_value' => 'decimal:2',
+            'bonus_value' => 'decimal:2',
             'amount' => 'decimal:2',
         ];
     }
@@ -72,5 +78,55 @@ class Purchase extends Model
     public function isGuestPurchase(): bool
     {
         return $this->vehicle_id === null;
+    }
+
+    public function discountAmount(): float
+    {
+        return $this->adjustmentAmount($this->discount_value, $this->discount_type);
+    }
+
+    public function bonusAmount(): float
+    {
+        return $this->adjustmentAmount($this->bonus_value, $this->bonus_type);
+    }
+
+    public function displayDiscount(): string
+    {
+        return $this->displayAdjustment($this->discount_value, $this->discount_type, $this->discountAmount());
+    }
+
+    public function displayBonus(): string
+    {
+        return $this->displayAdjustment($this->bonus_value, $this->bonus_type, $this->bonusAmount());
+    }
+
+    private function adjustmentAmount(mixed $value, ?string $type): float
+    {
+        $value = (float) ($value ?: 0);
+
+        if ($value <= 0) {
+            return 0.0;
+        }
+
+        $baseAmount = (float) $this->quantity * (float) $this->rate;
+
+        return $type === 'percent'
+            ? round($baseAmount * ($value / 100), 2)
+            : round($value, 2);
+    }
+
+    private function displayAdjustment(mixed $value, ?string $type, float $amount): string
+    {
+        $value = (float) ($value ?: 0);
+
+        if ($value <= 0) {
+            return '—';
+        }
+
+        if ($type === 'percent') {
+            return number_format($value, 2).'% ('.number_format($amount, 2).')';
+        }
+
+        return number_format($amount, 2);
     }
 }

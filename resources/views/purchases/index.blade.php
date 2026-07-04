@@ -40,6 +40,14 @@
 
             'rate' => '',
 
+            'discount_value' => '',
+
+            'discount_type' => 'taka',
+
+            'bonus_value' => '',
+
+            'bonus_type' => 'taka',
+
             'remarks' => '',
 
         ],
@@ -171,6 +179,10 @@
 
                     <th>Qty</th>
 
+                    <th class="text-right">Discount</th>
+
+                    <th class="text-right">Bonus</th>
+
                     <th class="text-right">Amount</th>
 
                     <th class="text-right">Actions</th>
@@ -194,6 +206,10 @@
                         <td data-label="Vehicle">{{ $purchase->displayVehicle() }}</td>
 
                         <td data-label="Qty">{{ number_format((float) $purchase->quantity, 2) }}</td>
+
+                        <td class="text-right" data-label="Discount">{{ $purchase->displayDiscount() }}</td>
+
+                        <td class="text-right" data-label="Bonus">{{ $purchase->displayBonus() }}</td>
 
                         <td class="text-right font-medium text-slate-900" data-label="Amount">{{ number_format((float) $purchase->amount, 2) }}</td>
 
@@ -228,6 +244,14 @@
 
                                     'rate' => (string) $purchase->rate,
 
+                                    'discount_value' => (string) ($purchase->discount_value ?? ''),
+
+                                    'discount_type' => $purchase->discount_type ?? 'taka',
+
+                                    'bonus_value' => (string) ($purchase->bonus_value ?? ''),
+
+                                    'bonus_type' => $purchase->bonus_type ?? 'taka',
+
                                     'remarks' => $purchase->remarks,
                                 ]))">Edit</button>
                                 @can('delete-records')
@@ -247,7 +271,7 @@
 
                     <tr class="data-table-empty-row">
 
-                        <td colspan="7" class="data-table-empty">No purchase entries found.</td>
+                        <td colspan="9" class="data-table-empty">No purchase entries found.</td>
 
                     </tr>
 

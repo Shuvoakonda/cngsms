@@ -20,11 +20,19 @@ class PurchaseRequest extends FormRequest
             'vehicle_id' => $this->input('vehicle_id') ?: null,
             'driver_id' => $this->input('driver_id') ?: null,
             'guest_reference' => $this->filled('guest_reference') ? trim((string) $this->input('guest_reference')) : null,
+            'discount_value' => $this->filled('discount_value') ? $this->input('discount_value') : null,
+            'discount_type' => $this->filled('discount_value') ? ($this->input('discount_type') ?: 'taka') : null,
+            'bonus_value' => $this->filled('bonus_value') ? $this->input('bonus_value') : null,
+            'bonus_type' => $this->filled('bonus_value') ? ($this->input('bonus_type') ?: 'taka') : null,
         ]);
 
         if ($this->filled(['quantity', 'rate'])) {
+            $baseAmount = round((float) $this->input('quantity') * (float) $this->input('rate'), 2);
+            $discount = $this->adjustmentAmount($baseAmount, $this->input('discount_value'), $this->input('discount_type'));
+            $bonus = $this->adjustmentAmount($baseAmount, $this->input('bonus_value'), $this->input('bonus_type'));
+
             $this->merge([
-                'amount' => round((float) $this->input('quantity') * (float) $this->input('rate'), 2),
+                'amount' => round($baseAmount - $discount + $bonus, 2),
             ]);
         }
 
@@ -56,6 +64,10 @@ class PurchaseRequest extends FormRequest
             ],
             'quantity' => ['required', 'numeric', 'gt:0'],
             'rate' => ['required', 'numeric', 'gt:0'],
+            'discount_value' => ['nullable', 'numeric', 'gte:0'],
+            'discount_type' => ['nullable', 'required_with:discount_value', Rule::in(['taka', 'percent'])],
+            'bonus_value' => ['nullable', 'numeric', 'gte:0'],
+            'bonus_type' => ['nullable', 'required_with:bonus_value', Rule::in(['taka', 'percent'])],
             'amount' => ['required', 'numeric', 'gt:0'],
             'remarks' => ['nullable', 'string', 'max:1000'],
         ];
@@ -69,5 +81,18 @@ class PurchaseRequest extends FormRequest
         return [
             'slip_number.unique' => 'This slip number already exists for the selected pump.',
         ];
+    }
+
+    private function adjustmentAmount(float $baseAmount, mixed $value, mixed $type): float
+    {
+        $value = (float) ($value ?: 0);
+
+        if ($value <= 0) {
+            return 0;
+        }
+
+        return $type === 'percent'
+            ? round($baseAmount * ($value / 100), 2)
+            : round($value, 2);
     }
 }

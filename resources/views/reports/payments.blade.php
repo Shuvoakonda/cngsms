@@ -52,7 +52,7 @@
 
     <x-reports.print-shell title="Payment Report" :summary="'Total amount: '.number_format($totals['amount'], 2).' '.$company->currency">
 
-        <x-data-table-card class="report-print-body">
+        <x-data-table-card class="report-print-body" :paginator="$rows">
 
         <thead>
 

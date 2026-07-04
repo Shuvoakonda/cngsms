@@ -30,7 +30,7 @@
 
     <div class="report-screen-only mb-4 rounded-2xl bg-white p-4 ring-1 ring-slate-200">
 
-        <p class="text-sm text-slate-600">Total: <strong>{{ $report['totals']['count'] }}</strong> entries · <strong>{{ number_format($report['totals']['quantity'], 2) }}</strong> qty · <strong>{{ number_format($report['totals']['amount'], 2) }}</strong> {{ $company->currency }}</p>
+        <p class="text-sm text-slate-600">Total: <strong>{{ $report['totals']['count'] }}</strong> entries · <strong>{{ number_format($report['totals']['quantity'], 2) }}</strong> qty · Discount <strong>{{ number_format($report['totals']['discount'], 2) }}</strong> · Bonus <strong>{{ number_format($report['totals']['bonus'], 2) }}</strong> · <strong>{{ number_format($report['totals']['amount'], 2) }}</strong> {{ $company->currency }}</p>
 
     </div>
 
@@ -58,6 +58,10 @@
 
                             <th class="text-right">Qty</th>
 
+                            <th class="text-right">Discount</th>
+
+                            <th class="text-right">Bonus</th>
+
                             <th class="text-right">Amount</th>
 
                         </tr>
@@ -76,13 +80,17 @@
 
                                 <td class="text-right" data-label="Qty">{{ number_format($row['quantity'], 2) }}</td>
 
+                                <td class="text-right" data-label="Discount">{{ number_format($row['discount'], 2) }}</td>
+
+                                <td class="text-right" data-label="Bonus">{{ number_format($row['bonus'], 2) }}</td>
+
                                 <td class="text-right font-medium" data-label="Amount">{{ number_format($row['amount'], 2) }}</td>
 
                             </tr>
 
                         @empty
 
-                            <tr class="data-table-empty-row"><td colspan="4" class="data-table-empty">No data.</td></tr>
+                            <tr class="data-table-empty-row"><td colspan="6" class="data-table-empty">No data.</td></tr>
 
                         @endforelse
 
@@ -91,6 +99,12 @@
                 </table>
 
             </div>
+
+            @if ($report['byPump']->hasPages())
+                <div class="data-table-footer">
+                    {{ $report['byPump']->links() }}
+                </div>
+            @endif
 
         </div>
 
@@ -112,6 +126,10 @@
 
                             <th class="text-right">Qty</th>
 
+                            <th class="text-right">Discount</th>
+
+                            <th class="text-right">Bonus</th>
+
                             <th class="text-right">Amount</th>
 
                         </tr>
@@ -130,13 +148,17 @@
 
                                 <td class="text-right" data-label="Qty">{{ number_format($row['quantity'], 2) }}</td>
 
+                                <td class="text-right" data-label="Discount">{{ number_format($row['discount'], 2) }}</td>
+
+                                <td class="text-right" data-label="Bonus">{{ number_format($row['bonus'], 2) }}</td>
+
                                 <td class="text-right font-medium" data-label="Amount">{{ number_format($row['amount'], 2) }}</td>
 
                             </tr>
 
                         @empty
 
-                            <tr class="data-table-empty-row"><td colspan="4" class="data-table-empty">No data.</td></tr>
+                            <tr class="data-table-empty-row"><td colspan="6" class="data-table-empty">No data.</td></tr>
 
                         @endforelse
 
@@ -145,6 +167,12 @@
                 </table>
 
             </div>
+
+            @if ($report['byVehicle']->hasPages())
+                <div class="data-table-footer">
+                    {{ $report['byVehicle']->links() }}
+                </div>
+            @endif
 
         </div>
 

@@ -6,7 +6,9 @@ use App\Models\Company;
 use App\Models\Pump;
 use App\Services\ExcelReportExportService;
 use App\Services\ReportService;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -29,7 +31,7 @@ class ReportController extends Controller
 
         return view('reports.daily-purchases', [
             'filters' => $filters,
-            'rows' => $report['rows'],
+            'rows' => $this->paginateCollection($report['rows'], $request, 'page'),
             'totals' => $report['totals'],
             'pumps' => $this->reports->activePumps(),
             'vehicles' => $this->reports->activeVehicles(),
@@ -43,7 +45,12 @@ class ReportController extends Controller
 
         return view('reports.monthly-purchases', [
             'filters' => $filters,
-            'report' => $report,
+            'report' => [
+                ...$report,
+                'byPump' => $this->paginateCollection($report['byPump'], $request, 'pump_page'),
+                'byVehicle' => $this->paginateCollection($report['byVehicle'], $request, 'vehicle_page'),
+                'byPumpDriver' => $this->paginateCollection($report['byPumpDriver'], $request, 'driver_page'),
+            ],
         ]);
     }
 
@@ -59,7 +66,10 @@ class ReportController extends Controller
 
         return view('reports.pump-ledger', [
             'filters' => $filters,
-            'report' => $report,
+            'report' => [
+                ...$report,
+                'entries' => $this->paginateCollection($report['entries'], $request, 'page'),
+            ],
             'pumps' => $this->reports->activePumps(),
         ]);
     }
@@ -71,9 +81,11 @@ class ReportController extends Controller
 
         return view('reports.outstanding', [
             'filters' => $filters,
-            'rows' => $rows,
+            'rows' => $this->paginateCollection($rows, $request, 'page'),
             'totals' => [
                 'entries' => $rows->sum('entries'),
+                'discount' => round($rows->sum('discount'), 2),
+                'bonus' => round($rows->sum('bonus'), 2),
                 'due' => round($rows->sum('due'), 2),
                 'advance' => round($rows->sum('advance'), 2),
             ],
@@ -89,8 +101,13 @@ class ReportController extends Controller
         $filters = $request->only(['date_from', 'date_to']);
         $rows = $this->reports->vehicleWise($filters);
         $driverByPump = $this->reports->driverEntriesByPump($filters);
+        $totals = [
+            'amount' => round($rows->sum(fn ($row) => $row['amount']), 2),
+        ];
+        $rows = $this->paginateCollection($rows, $request, 'page');
+        $driverByPump = $this->paginateCollection($driverByPump, $request, 'driver_page');
 
-        return view('reports.vehicle-wise', compact('filters', 'rows', 'driverByPump'));
+        return view('reports.vehicle-wise', compact('filters', 'rows', 'driverByPump', 'totals'));
     }
 
     public function driverWise(Request $request): View
@@ -98,8 +115,13 @@ class ReportController extends Controller
         $filters = $request->only(['date_from', 'date_to']);
         $rows = $this->reports->driverWise($filters);
         $driverByPump = $this->reports->driverEntriesByPump($filters);
+        $totals = [
+            'amount' => round($rows->sum(fn ($row) => $row['amount']), 2),
+        ];
+        $rows = $this->paginateCollection($rows, $request, 'page');
+        $driverByPump = $this->paginateCollection($driverByPump, $request, 'driver_page');
 
-        return view('reports.driver-wise', compact('filters', 'rows', 'driverByPump'));
+        return view('reports.driver-wise', compact('filters', 'rows', 'driverByPump', 'totals'));
     }
 
     public function payments(Request $request): View
@@ -109,7 +131,7 @@ class ReportController extends Controller
 
         return view('reports.payments', [
             'filters' => $filters,
-            'rows' => $report['rows'],
+            'rows' => $this->paginateCollection($report['rows'], $request, 'page'),
             'totals' => $report['totals'],
             'pumps' => $this->reports->activePumps(),
         ]);
@@ -124,7 +146,7 @@ class ReportController extends Controller
         return $this->excel->download(
             'daily-purchases.xlsx',
             'Daily Purchase Report',
-            ['Date', 'Slip', 'Pump', 'Vehicle', 'Driver', 'Quantity', 'Rate', 'Amount'],
+            ['Date', 'Slip', 'Pump', 'Vehicle', 'Driver', 'Quantity', 'Rate', 'Discount', 'Bonus', 'Amount'],
             $report['rows']->map(fn ($row) => [
                 $row->purchase_date->format('Y-m-d'),
                 $row->slip_number,
@@ -133,15 +155,19 @@ class ReportController extends Controller
                 $row->displayDriver(),
                 (float) $row->quantity,
                 (float) $row->rate,
+                $row->discountAmount(),
+                $row->bonusAmount(),
                 (float) $row->amount,
             ])->all(),
             $this->filterMeta($filters),
             [
                 'Entries' => $report['totals']['count'],
                 'Quantity' => number_format($report['totals']['quantity'], 2).' '.$company->quantity_unit,
+                'Discount' => number_format($report['totals']['discount'], 2).' '.$company->currency,
+                'Bonus' => number_format($report['totals']['bonus'], 2).' '.$company->currency,
                 'Amount' => number_format($report['totals']['amount'], 2).' '.$company->currency,
             ],
-            [6, 7, 8],
+            [6, 7, 8, 9, 10],
         );
     }
 
@@ -155,31 +181,39 @@ class ReportController extends Controller
             'Pump' => $row['label'],
             'Entries' => $row['count'],
             'Quantity' => $row['quantity'],
+            'Discount' => $row['discount'],
+            'Bonus' => $row['bonus'],
             'Amount' => $row['amount'],
         ])->concat($report['byVehicle']->map(fn ($row) => [
             'Pump' => 'Vehicle: '.$row['label'],
             'Entries' => $row['count'],
             'Quantity' => $row['quantity'],
+            'Discount' => $row['discount'],
+            'Bonus' => $row['bonus'],
             'Amount' => $row['amount'],
         ]))->concat($report['byPumpDriver']->map(fn ($row) => [
             'Pump' => 'Driver @ '.$row['pump'].': '.$row['driver'],
             'Entries' => $row['count'],
             'Quantity' => $row['quantity'],
+            'Discount' => $row['discount'],
+            'Bonus' => $row['bonus'],
             'Amount' => $row['amount'],
         ]))->values();
 
         return $this->excel->download(
             'monthly-purchases.xlsx',
             'Monthly Purchase Summary',
-            ['Group', 'Entries', 'Quantity', 'Amount'],
+            ['Group', 'Entries', 'Quantity', 'Discount', 'Bonus', 'Amount'],
             $rows->map(fn ($row) => array_values($row))->all(),
             $this->filterMeta($filters),
             [
                 'Entries' => $report['totals']['count'],
                 'Quantity' => number_format($report['totals']['quantity'], 2).' '.$company->quantity_unit,
+                'Discount' => number_format($report['totals']['discount'], 2).' '.$company->currency,
+                'Bonus' => number_format($report['totals']['bonus'], 2).' '.$company->currency,
                 'Amount' => number_format($report['totals']['amount'], 2).' '.$company->currency,
             ],
-            [2, 3, 4],
+            [2, 3, 4, 5, 6],
         );
     }
 
@@ -193,18 +227,20 @@ class ReportController extends Controller
         return $this->excel->download(
             'pump-ledger.xlsx',
             'Pump Ledger — '.($report['pump']?->name ?? 'Unknown'),
-            ['Date', 'Reference', 'Description', 'Debit', 'Credit', 'Balance'],
+            ['Date', 'Reference', 'Description', 'Discount', 'Bonus', 'Debit', 'Credit', 'Balance'],
             $report['entries']->map(fn ($entry) => [
                 $entry['date'] ?? '—',
                 $entry['reference'],
                 $entry['description'],
+                $entry['discount'] ?? '',
+                $entry['bonus'] ?? '',
                 $entry['debit'] ?: '',
                 $entry['credit'] ?: '',
                 $entry['balance'],
             ])->all(),
             $this->filterMeta($filters, ['Pump' => $report['pump']?->name]),
             ['Closing Balance' => number_format($report['closing_balance'], 2).' '.$company->currency],
-            [4, 5, 6],
+            [6, 7, 8],
         );
     }
 
@@ -217,21 +253,25 @@ class ReportController extends Controller
         return $this->excel->download(
             'pump-summary.xlsx',
             'Pump Summary Report',
-            ['Pump', 'Entries', 'Purchase', 'Payment', 'Due', 'Advance'],
+            ['Pump', 'Entries', 'Purchase', 'Discount', 'Bonus', 'Payment', 'Due', 'Advance'],
             $rows->map(fn ($row) => [
                 $row['pump'],
                 $row['entries'],
                 $row['total_purchase'],
+                $row['discount'],
+                $row['bonus'],
                 $row['total_payment'],
                 $row['due'],
                 $row['advance'],
             ])->all(),
             $this->filterMeta($filters, ['As of' => now()->format('d M Y')]),
             [
+                'Total Discount' => number_format($rows->sum('discount'), 2).' '.$company->currency,
+                'Total Bonus' => number_format($rows->sum('bonus'), 2).' '.$company->currency,
                 'Total Due' => number_format($rows->sum('due'), 2).' '.$company->currency,
                 'Total Advance' => number_format($rows->sum('advance'), 2).' '.$company->currency,
             ],
-            [3, 4, 5, 6],
+            [3, 4, 5, 6, 7, 8],
         );
     }
 
@@ -246,25 +286,31 @@ class ReportController extends Controller
             'Vehicle: '.$row['vehicle'],
             $row['count'],
             $row['quantity'],
+            $row['discount'],
+            $row['bonus'],
             $row['amount'],
         ])->concat($driverByPump->map(fn ($row) => [
             $row['pump'].' — '.$row['driver'],
             $row['count'],
             $row['quantity'],
+            $row['discount'],
+            $row['bonus'],
             $row['amount'],
         ]))->values();
 
         return $this->excel->download(
             'vehicle-wise.xlsx',
             'Vehicle-wise Purchase Report',
-            ['Group', 'Entries', 'Quantity', 'Amount'],
+            ['Group', 'Entries', 'Quantity', 'Discount', 'Bonus', 'Amount'],
             $exportRows->all(),
             $this->filterMeta($filters),
             [
                 'Entries' => $rows->sum(fn ($row) => $row['count']),
+                'Discount' => number_format($rows->sum(fn ($row) => $row['discount']), 2).' '.$company->currency,
+                'Bonus' => number_format($rows->sum(fn ($row) => $row['bonus']), 2).' '.$company->currency,
                 'Amount' => number_format($rows->sum(fn ($row) => $row['amount']), 2).' '.$company->currency,
             ],
-            [2, 3, 4],
+            [2, 3, 4, 5, 6],
         );
     }
 
@@ -279,25 +325,31 @@ class ReportController extends Controller
             'Driver: '.$row['driver'],
             $row['count'],
             $row['quantity'],
+            $row['discount'],
+            $row['bonus'],
             $row['amount'],
         ])->concat($driverByPump->map(fn ($row) => [
             $row['pump'].' — '.$row['driver'],
             $row['count'],
             $row['quantity'],
+            $row['discount'],
+            $row['bonus'],
             $row['amount'],
         ]))->values();
 
         return $this->excel->download(
             'driver-wise.xlsx',
             'Driver-wise Purchase Report',
-            ['Group', 'Entries', 'Quantity', 'Amount'],
+            ['Group', 'Entries', 'Quantity', 'Discount', 'Bonus', 'Amount'],
             $exportRows->all(),
             $this->filterMeta($filters),
             [
                 'Entries' => $rows->sum(fn ($row) => $row['count']),
+                'Discount' => number_format($rows->sum(fn ($row) => $row['discount']), 2).' '.$company->currency,
+                'Bonus' => number_format($rows->sum(fn ($row) => $row['bonus']), 2).' '.$company->currency,
                 'Amount' => number_format($rows->sum(fn ($row) => $row['amount']), 2).' '.$company->currency,
             ],
-            [2, 3, 4],
+            [2, 3, 4, 5, 6],
         );
     }
 
@@ -363,5 +415,29 @@ class ReportController extends Controller
         }
 
         return $meta;
+    }
+
+    /**
+     * @template TKey of array-key
+     * @template TValue
+     *
+     * @param  Collection<TKey, TValue>  $rows
+     * @return LengthAwarePaginator<TValue>
+     */
+    private function paginateCollection(Collection $rows, Request $request, string $pageName, int $perPage = 20): LengthAwarePaginator
+    {
+        $page = LengthAwarePaginator::resolveCurrentPage($pageName);
+
+        return new LengthAwarePaginator(
+            $rows->forPage($page, $perPage)->values(),
+            $rows->count(),
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+                'pageName' => $pageName,
+            ],
+        );
     }
 }

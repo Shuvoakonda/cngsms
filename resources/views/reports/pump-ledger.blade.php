@@ -76,7 +76,7 @@
 
     >
 
-        <x-data-table-card class="report-print-body">
+        <x-data-table-card class="report-print-body" :paginator="$report['entries']">
 
         <thead>
 
@@ -87,6 +87,10 @@
                 <th>Reference</th>
 
                 <th>Description</th>
+
+                <th class="text-right">Discount</th>
+
+                <th class="text-right">Bonus</th>
 
                 <th class="text-right">Debit</th>
 
@@ -109,6 +113,10 @@
                     <td class="col-primary font-mono" data-label="Reference">{{ $entry['reference'] }}</td>
 
                     <td data-label="Description">{{ $entry['description'] }}</td>
+
+                    <td class="text-right" data-label="Discount">{{ $entry['discount'] ?? '—' }}</td>
+
+                    <td class="text-right" data-label="Bonus">{{ $entry['bonus'] ?? '—' }}</td>
 
                     <td class="text-right" data-label="Debit">{{ $entry['debit'] ? number_format($entry['debit'], 2) : '—' }}</td>
 

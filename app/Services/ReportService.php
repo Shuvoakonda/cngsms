@@ -31,6 +31,8 @@ class ReportService
             'totals' => [
                 'count' => $rows->count(),
                 'quantity' => round((float) $rows->sum('quantity'), 2),
+                'discount' => $this->sumDiscounts($rows),
+                'bonus' => $this->sumBonuses($rows),
                 'amount' => round((float) $rows->sum('amount'), 2),
             ],
         ];
@@ -58,6 +60,8 @@ class ReportService
                 'label' => $pump?->name ?? 'Unknown',
                 'count' => $items->count(),
                 'quantity' => round((float) $items->sum('quantity'), 2),
+                'discount' => $this->sumDiscounts($items),
+                'bonus' => $this->sumBonuses($items),
                 'amount' => round((float) $items->sum('amount'), 2),
             ];
         })->sortByDesc('amount')->values();
@@ -67,6 +71,8 @@ class ReportService
                 'label' => $items->first()?->displayVehicle() ?? 'Guest',
                 'count' => $items->count(),
                 'quantity' => round((float) $items->sum('quantity'), 2),
+                'discount' => $this->sumDiscounts($items),
+                'bonus' => $this->sumBonuses($items),
                 'amount' => round((float) $items->sum('amount'), 2),
             ];
         })->sortByDesc('amount')->values();
@@ -79,6 +85,8 @@ class ReportService
             'totals' => [
                 'count' => $purchases->count(),
                 'quantity' => round((float) $purchases->sum('quantity'), 2),
+                'discount' => $this->sumDiscounts($purchases),
+                'bonus' => $this->sumBonuses($purchases),
                 'amount' => round((float) $purchases->sum('amount'), 2),
             ],
         ];
@@ -111,6 +119,8 @@ class ReportService
                     'driver' => $first?->displayDriver() ?? 'Guest',
                     'count' => $items->count(),
                     'quantity' => round((float) $items->sum('quantity'), 2),
+                    'discount' => $this->sumDiscounts($items),
+                    'bonus' => $this->sumBonuses($items),
                     'amount' => round((float) $items->sum('amount'), 2),
                 ];
             })
@@ -136,6 +146,8 @@ class ReportService
                 'date' => null,
                 'reference' => 'OPENING',
                 'description' => 'Opening due',
+                'discount' => null,
+                'bonus' => null,
                 'debit' => (float) $pump->opening_balance,
                 'credit' => 0.0,
                 'balance' => $running,
@@ -148,6 +160,8 @@ class ReportService
                 'date' => null,
                 'reference' => 'OPENING',
                 'description' => 'Opening advance',
+                'discount' => null,
+                'bonus' => null,
                 'debit' => 0.0,
                 'credit' => (float) $pump->opening_advance,
                 'balance' => $running,
@@ -159,6 +173,8 @@ class ReportService
                 'date' => null,
                 'reference' => 'OPENING',
                 'description' => 'Opening balance',
+                'discount' => null,
+                'bonus' => null,
                 'debit' => 0.0,
                 'credit' => 0.0,
                 'balance' => 0.0,
@@ -178,6 +194,8 @@ class ReportService
                 'date' => $purchase->purchase_date->format('d M Y'),
                 'reference' => $purchase->slip_number,
                 'description' => 'Purchase — '.$purchase->displayVehicle(),
+                'discount' => $purchase->displayDiscount(),
+                'bonus' => $purchase->displayBonus(),
                 'debit' => (float) $purchase->amount,
                 'credit' => 0.0,
                 'type' => 'purchase',
@@ -195,6 +213,8 @@ class ReportService
                 'date' => $payment->payment_date->format('d M Y'),
                 'reference' => $payment->voucher_number,
                 'description' => $payment->type->label().' — '.$payment->payment_method->label(),
+                'discount' => null,
+                'bonus' => null,
                 'debit' => 0.0,
                 'credit' => (float) $payment->amount,
                 'type' => $payment->type->value,
@@ -211,6 +231,8 @@ class ReportService
                 'date' => $transaction['date'],
                 'reference' => $transaction['reference'],
                 'description' => $transaction['description'],
+                'discount' => $transaction['discount'],
+                'bonus' => $transaction['bonus'],
                 'debit' => $transaction['debit'],
                 'credit' => $transaction['credit'],
                 'balance' => $running,
@@ -233,6 +255,7 @@ class ReportService
         $hasDateFilter = ! empty($filters['date_from']) || ! empty($filters['date_to']);
 
         return Pump::withTrashed()
+            ->with(['purchases' => fn ($query) => $this->applyTransactionDateFilters($query, $filters, 'purchase_date')])
             ->withSum(['purchases as purchases_total' => fn ($query) => $this->applyTransactionDateFilters($query, $filters, 'purchase_date')], 'amount')
             ->withSum(['payments as payments_total' => fn ($query) => $this->applyTransactionDateFilters($query, $filters, 'payment_date')], 'amount')
             ->withCount(['purchases as entry_count' => fn ($query) => $this->applyTransactionDateFilters($query, $filters, 'purchase_date')])
@@ -249,6 +272,8 @@ class ReportService
                     'opening_advance' => (float) $pump->opening_advance,
                     'total_purchase' => $purchases,
                     'total_payment' => $payments,
+                    'discount' => $this->sumDiscounts($pump->purchases),
+                    'bonus' => $this->sumBonuses($pump->purchases),
                     'due' => $pump->dueAmount($purchases, $payments),
                     'advance' => $pump->advanceBalance($purchases, $payments),
                     'credit_limit' => (float) $pump->credit_limit,
@@ -291,6 +316,8 @@ class ReportService
                     'vehicle' => $items->first()?->displayVehicle() ?? 'Guest',
                     'count' => $items->count(),
                     'quantity' => round((float) $items->sum('quantity'), 2),
+                    'discount' => $this->sumDiscounts($items),
+                    'bonus' => $this->sumBonuses($items),
                     'amount' => round((float) $items->sum('amount'), 2),
                 ];
             })
@@ -315,6 +342,8 @@ class ReportService
                     'driver' => $items->first()?->displayDriver() ?? 'Guest',
                     'count' => $items->count(),
                     'quantity' => round((float) $items->sum('quantity'), 2),
+                    'discount' => $this->sumDiscounts($items),
+                    'bonus' => $this->sumBonuses($items),
                     'amount' => round((float) $items->sum('amount'), 2),
                 ];
             })
@@ -396,6 +425,16 @@ class ReportService
                 $query->where('vehicle_id', $filters['vehicle_id']);
             }
         }
+    }
+
+    private function sumDiscounts(Collection $purchases): float
+    {
+        return round((float) $purchases->sum(fn (Purchase $purchase) => $purchase->discountAmount()), 2);
+    }
+
+    private function sumBonuses(Collection $purchases): float
+    {
+        return round((float) $purchases->sum(fn (Purchase $purchase) => $purchase->bonusAmount()), 2);
     }
 
     public function activePumps(): Collection

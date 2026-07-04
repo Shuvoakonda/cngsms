@@ -80,11 +80,15 @@
 
 
 
-    <div class="report-screen-only mb-4 grid gap-4 sm:grid-cols-3">
+    <div class="report-screen-only mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
 
         <div class="rounded-2xl bg-white p-4 ring-1 ring-slate-200"><p class="text-xs text-slate-500">Entries</p><p class="text-2xl font-bold">{{ $totals['count'] }}</p></div>
 
         <div class="rounded-2xl bg-white p-4 ring-1 ring-slate-200"><p class="text-xs text-slate-500">Quantity</p><p class="text-2xl font-bold">{{ number_format($totals['quantity'], 2) }}</p></div>
+
+        <div class="rounded-2xl bg-white p-4 ring-1 ring-slate-200"><p class="text-xs text-slate-500">Discount</p><p class="text-2xl font-bold">{{ number_format($totals['discount'], 2) }}</p></div>
+
+        <div class="rounded-2xl bg-white p-4 ring-1 ring-slate-200"><p class="text-xs text-slate-500">Bonus</p><p class="text-2xl font-bold">{{ number_format($totals['bonus'], 2) }}</p></div>
 
         <div class="rounded-2xl bg-white p-4 ring-1 ring-slate-200"><p class="text-xs text-slate-500">Amount</p><p class="text-2xl font-bold">{{ number_format($totals['amount'], 2) }}</p></div>
 
@@ -106,7 +110,7 @@
 
     >
 
-        <x-data-table-card class="report-print-body">
+        <x-data-table-card class="report-print-body" :paginator="$rows">
 
         <thead>
 
@@ -123,6 +127,10 @@
                 <th>Driver</th>
 
                 <th class="text-right">Qty</th>
+
+                <th class="text-right">Discount</th>
+
+                <th class="text-right">Bonus</th>
 
                 <th class="text-right">Amount</th>
 
@@ -148,6 +156,10 @@
 
                     <td class="text-right" data-label="Qty">{{ number_format((float) $row->quantity, 2) }}</td>
 
+                    <td class="text-right" data-label="Discount">{{ $row->displayDiscount() }}</td>
+
+                    <td class="text-right" data-label="Bonus">{{ $row->displayBonus() }}</td>
+
                     <td class="text-right font-medium" data-label="Amount">{{ number_format((float) $row->amount, 2) }}</td>
 
                 </tr>
@@ -156,7 +168,7 @@
 
                 <tr class="data-table-empty-row">
 
-                    <td colspan="7" class="data-table-empty">No records for selected filters.</td>
+                    <td colspan="9" class="data-table-empty">No records for selected filters.</td>
 
                 </tr>
 

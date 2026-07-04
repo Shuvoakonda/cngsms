@@ -102,6 +102,10 @@
 
                 <th>Vehicle</th>
 
+                <th class="text-right">Discount</th>
+
+                <th class="text-right">Bonus</th>
+
                 <th class="text-right">Amount</th>
 
             </tr>
@@ -122,6 +126,10 @@
 
                     <td data-label="Vehicle">@if ($purchase->vehicle)<a href="{{ route('admin.vehicles.show', $purchase->vehicle) }}" class="text-teal-700 hover:underline">{{ $purchase->vehicle->vehicle_number }}</a>@else — @endif</td>
 
+                    <td class="text-right" data-label="Discount">{{ $purchase->displayDiscount() }}</td>
+
+                    <td class="text-right" data-label="Bonus">{{ $purchase->displayBonus() }}</td>
+
                     <td class="text-right font-medium" data-label="Amount">{{ number_format((float) $purchase->amount, 2) }}</td>
 
                 </tr>
@@ -130,7 +138,7 @@
 
                 <tr class="data-table-empty-row">
 
-                    <td colspan="5" class="data-table-empty">No purchases recorded.</td>
+                        <td colspan="7" class="data-table-empty">No purchases recorded.</td>
 
                 </tr>
 

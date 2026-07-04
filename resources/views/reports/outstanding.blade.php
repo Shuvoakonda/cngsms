@@ -42,13 +42,29 @@
 
 
 
-    <div class="report-screen-only mb-4 grid gap-4 sm:grid-cols-3">
+    <div class="report-screen-only mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
 
         <div class="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
 
             <p class="text-xs text-slate-500">Total Entries</p>
 
             <p class="text-2xl font-bold text-slate-900">{{ number_format($totals['entries']) }}</p>
+
+        </div>
+
+        <div class="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
+
+            <p class="text-xs text-slate-500">Total Discount</p>
+
+            <p class="text-2xl font-bold text-slate-900">{{ number_format($totals['discount'], 2) }} {{ $company->currency }}</p>
+
+        </div>
+
+        <div class="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
+
+            <p class="text-xs text-slate-500">Total Bonus</p>
+
+            <p class="text-2xl font-bold text-slate-900">{{ number_format($totals['bonus'], 2) }} {{ $company->currency }}</p>
 
         </div>
 
@@ -98,7 +114,7 @@
 
             </div>
 
-            <x-data-table-card class="lg:col-span-1">
+            <x-data-table-card class="lg:col-span-1" :paginator="$rows">
 
                 <thead>
 
@@ -109,6 +125,10 @@
                         <th class="text-right">Entries</th>
 
                         <th class="text-right">Purchase</th>
+
+                        <th class="text-right">Discount</th>
+
+                        <th class="text-right">Bonus</th>
 
                         <th class="text-right">Payment</th>
 
@@ -131,6 +151,10 @@
                             <td class="text-right" data-label="Entries">{{ number_format($row['entries']) }}</td>
 
                             <td class="text-right" data-label="Purchase">{{ number_format($row['total_purchase'], 2) }}</td>
+
+                            <td class="text-right" data-label="Discount">{{ number_format($row['discount'], 2) }}</td>
+
+                            <td class="text-right" data-label="Bonus">{{ number_format($row['bonus'], 2) }}</td>
 
                             <td class="text-right" data-label="Payment">{{ number_format($row['total_payment'], 2) }}</td>
 
