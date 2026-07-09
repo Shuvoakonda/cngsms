@@ -14,6 +14,8 @@
 
         :export="route('reports.payments.export', request()->query())"
 
+        :pdf="route('reports.payments.pdf', request()->query())"
+
     >
 
         <div class="form-field"><x-input-label for="date_from" value="From" /><x-text-input id="date_from" name="date_from" type="date" :value="$filters['date_from'] ?? ''" /></div>

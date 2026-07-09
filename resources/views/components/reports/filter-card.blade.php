@@ -1,4 +1,4 @@
-@props(['action', 'export' => null, 'title' => 'Report Filters'])
+@props(['action', 'export' => null, 'pdf' => null, 'title' => 'Report Filters'])
 
 @php
     $activeCount = collect(request()->query())->except('page')->filter(fn ($value) => filled($value))->count();
@@ -15,6 +15,9 @@
     <x-slot:footer>
         @if ($export)
             <a href="{{ $export }}" class="inline-flex min-h-10 flex-1 items-center justify-center rounded-lg border border-slate-400 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 sm:flex-none">Export Excel</a>
+        @endif
+        @if ($pdf)
+            <a href="{{ $pdf }}" class="inline-flex min-h-10 flex-1 items-center justify-center rounded-lg border border-slate-400 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 sm:flex-none">Download PDF</a>
         @endif
         <button type="button" onclick="window.print()" class="inline-flex min-h-10 flex-1 items-center justify-center rounded-lg border border-slate-400 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 print:hidden sm:flex-none">Print</button>
     </x-slot:footer>

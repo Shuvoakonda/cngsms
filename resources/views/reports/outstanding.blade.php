@@ -20,6 +20,8 @@
 
         :export="route('reports.outstanding.export', request()->query())"
 
+        :pdf="route('reports.outstanding.pdf', request()->query())"
+
     >
 
         <div class="form-field">

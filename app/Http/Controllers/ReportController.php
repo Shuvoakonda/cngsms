@@ -6,8 +6,10 @@ use App\Models\Company;
 use App\Models\Pump;
 use App\Services\ExcelReportExportService;
 use App\Services\ReportService;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -170,51 +172,92 @@ class ReportController extends Controller
         );
     }
 
-    public function exportMonthlyPurchases(Request $request): StreamedResponse
+    public function exportDailyPurchasesPdf(Request $request): Response
+    {
+        $filters = $request->only(['date_from', 'date_to', 'pump_id', 'vehicle_id']);
+        $report = $this->reports->dailyPurchases($filters);
+
+        $pdf = Pdf::loadView('reports.pdf.report', [
+            'title' => 'Daily Purchase Report',
+            'meta' => $this->filterMeta($filters),
+            'summary' => 'Total amount: '.number_format($report['totals']['amount'], 2).' '.Company::current()->currency,
+            'tables' => [
+                [
+                    'title' => 'Daily Purchases',
+                    'columns' => ['Date', 'Slip', 'Pump', 'Vehicle', 'Driver', 'Qty', 'Discount', 'Bonus', 'Amount'],
+                    'rows' => $report['rows']->map(fn ($row) => [
+                        $row->purchase_date->format('d M Y'),
+                        $row->slip_number,
+                        $row->pump?->name,
+                        $row->displayVehicle(),
+                        $row->displayDriver(),
+                        number_format((float) $row->quantity, 2),
+                        number_format($row->discountAmount(), 2),
+                        number_format($row->bonusAmount(), 2),
+                        number_format((float) $row->amount, 2),
+                    ])->all(),
+                ],
+            ],
+        ]);
+
+        return $pdf->download('daily-purchases.pdf');
+    }
+
+    public function exportMonthlyPurchasesPdf(Request $request): Response
     {
         $filters = ['month' => $request->input('month', now()->format('Y-m'))];
         $report = $this->reports->monthlyPurchaseSummary($filters);
-        $company = Company::current();
 
-        $rows = $report['byPump']->map(fn ($row) => [
-            'Pump' => $row['label'],
-            'Entries' => $row['count'],
-            'Quantity' => $row['quantity'],
-            'Discount' => $row['discount'],
-            'Bonus' => $row['bonus'],
-            'Amount' => $row['amount'],
-        ])->concat($report['byVehicle']->map(fn ($row) => [
-            'Pump' => 'Vehicle: '.$row['label'],
-            'Entries' => $row['count'],
-            'Quantity' => $row['quantity'],
-            'Discount' => $row['discount'],
-            'Bonus' => $row['bonus'],
-            'Amount' => $row['amount'],
-        ]))->concat($report['byPumpDriver']->map(fn ($row) => [
-            'Pump' => 'Driver @ '.$row['pump'].': '.$row['driver'],
-            'Entries' => $row['count'],
-            'Quantity' => $row['quantity'],
-            'Discount' => $row['discount'],
-            'Bonus' => $row['bonus'],
-            'Amount' => $row['amount'],
-        ]))->values();
-
-        return $this->excel->download(
-            'monthly-purchases.xlsx',
-            'Monthly Purchase Summary',
-            ['Group', 'Entries', 'Quantity', 'Discount', 'Bonus', 'Amount'],
-            $rows->map(fn ($row) => array_values($row))->all(),
-            $this->filterMeta($filters),
+        $tables = [
             [
-                'Entries' => $report['totals']['count'],
-                'Quantity' => number_format($report['totals']['quantity'], 2).' '.$company->quantity_unit,
-                'Discount' => number_format($report['totals']['discount'], 2).' '.$company->currency,
-                'Bonus' => number_format($report['totals']['bonus'], 2).' '.$company->currency,
-                'Amount' => number_format($report['totals']['amount'], 2).' '.$company->currency,
+                'title' => 'By Pump',
+                'columns' => ['Pump', 'Entries', 'Qty', 'Discount', 'Bonus', 'Amount'],
+                'rows' => $report['byPump']->map(fn ($row) => [
+                    $row['label'],
+                    $row['count'],
+                    number_format($row['quantity'], 2),
+                    number_format($row['discount'], 2),
+                    number_format($row['bonus'], 2),
+                    number_format($row['amount'], 2),
+                ])->all(),
             ],
-            [2, 3, 4, 5, 6],
-        );
+            [
+                'title' => 'By Vehicle',
+                'columns' => ['Vehicle', 'Entries', 'Qty', 'Discount', 'Bonus', 'Amount'],
+                'rows' => $report['byVehicle']->map(fn ($row) => [
+                    $row['label'],
+                    $row['count'],
+                    number_format($row['quantity'], 2),
+                    number_format($row['discount'], 2),
+                    number_format($row['bonus'], 2),
+                    number_format($row['amount'], 2),
+                ])->all(),
+            ],
+            [
+                'title' => 'Driver Entries by Pump',
+                'columns' => ['Pump', 'Driver', 'Entries', 'Qty', 'Discount', 'Bonus', 'Amount'],
+                'rows' => $report['byPumpDriver']->map(fn ($row) => [
+                    $row['pump'],
+                    $row['driver'],
+                    $row['count'],
+                    number_format($row['quantity'], 2),
+                    number_format($row['discount'], 2),
+                    number_format($row['bonus'], 2),
+                    number_format($row['amount'], 2),
+                ])->all(),
+            ],
+        ];
+
+        $pdf = Pdf::loadView('reports.pdf.report', [
+            'title' => 'Monthly Purchase Summary',
+            'meta' => $this->filterMeta($filters),
+            'summary' => 'Total amount: '.number_format($report['totals']['amount'], 2).' '.Company::current()->currency,
+            'tables' => $tables,
+        ]);
+
+        return $pdf->download('monthly-purchases.pdf');
     }
+
 
     public function exportPumpLedger(Request $request): StreamedResponse
     {
@@ -241,6 +284,37 @@ class ReportController extends Controller
             ['Closing Balance' => number_format($report['closing_balance'], 2).' '.$company->currency],
             [6, 7, 8],
         );
+    }
+
+    public function exportPumpLedgerPdf(Request $request): Response
+    {
+        $pumpId = (int) $request->input('pump_id', $this->reports->activePumps()->first()?->id);
+        $filters = $request->only(['date_from', 'date_to', 'pump_id']);
+        $report = $this->reports->pumpLedger($pumpId, $filters['date_from'] ?? null, $filters['date_to'] ?? null);
+
+        $pdf = Pdf::loadView('reports.pdf.report', [
+            'title' => 'Pump Ledger',
+            'meta' => $this->filterMeta($filters, ['Pump' => $report['pump']?->name]),
+            'summary' => 'Closing balance: '.number_format($report['closing_balance'], 2).' '.Company::current()->currency,
+            'tables' => [
+                [
+                    'title' => 'Ledger Entries',
+                    'columns' => ['Date', 'Reference', 'Description', 'Discount', 'Bonus', 'Debit', 'Credit', 'Balance'],
+                    'rows' => collect($report['entries'])->map(fn ($entry) => [
+                        $entry['date'] ?? '—',
+                        $entry['reference'],
+                        $entry['description'],
+                        $entry['discount'] ?? '',
+                        $entry['bonus'] ?? '',
+                        $entry['debit'] ? number_format($entry['debit'], 2) : '',
+                        $entry['credit'] ? number_format($entry['credit'], 2) : '',
+                        number_format($entry['balance'], 2),
+                    ])->all(),
+                ],
+            ],
+        ]);
+
+        return $pdf->download('pump-ledger.pdf');
     }
 
     public function exportOutstanding(Request $request): StreamedResponse
@@ -272,6 +346,36 @@ class ReportController extends Controller
             ],
             [3, 4, 5, 6, 7, 8],
         );
+    }
+
+    public function exportOutstandingPdf(Request $request): Response
+    {
+        $filters = $request->only(['date_from', 'date_to']);
+        $rows = $this->reports->outstandingReport($filters);
+
+        $pdf = Pdf::loadView('reports.pdf.report', [
+            'title' => 'Pump Summary Report',
+            'meta' => $this->filterMeta($filters, ['As of' => now()->format('d M Y')]),
+            'summary' => 'Total due: '.number_format($rows->sum('due'), 2).' '.Company::current()->currency.' | Total advance: '.number_format($rows->sum('advance'), 2).' '.Company::current()->currency,
+            'tables' => [
+                [
+                    'title' => 'Pump Summary',
+                    'columns' => ['Pump', 'Entries', 'Purchase', 'Discount', 'Bonus', 'Payment', 'Due', 'Advance'],
+                    'rows' => $rows->map(fn ($row) => [
+                        $row['pump'],
+                        $row['entries'],
+                        number_format($row['total_purchase'], 2),
+                        number_format($row['discount'], 2),
+                        number_format($row['bonus'], 2),
+                        number_format($row['total_payment'], 2),
+                        number_format($row['due'], 2),
+                        number_format($row['advance'], 2),
+                    ])->all(),
+                ],
+            ],
+        ]);
+
+        return $pdf->download('pump-summary.pdf');
     }
 
     public function exportVehicleWise(Request $request): StreamedResponse
@@ -313,6 +417,50 @@ class ReportController extends Controller
         );
     }
 
+    public function exportVehicleWisePdf(Request $request): Response
+    {
+        $filters = $request->only(['date_from', 'date_to']);
+        $rows = $this->reports->vehicleWise($filters);
+        $driverByPump = $this->reports->driverEntriesByPump($filters);
+
+        $tables = [
+            [
+                'title' => 'By Vehicle',
+                'columns' => ['Vehicle', 'Entries', 'Qty', 'Discount', 'Bonus', 'Amount'],
+                'rows' => $rows->map(fn ($row) => [
+                    $row['vehicle'],
+                    $row['count'],
+                    number_format($row['quantity'], 2),
+                    number_format($row['discount'], 2),
+                    number_format($row['bonus'], 2),
+                    number_format($row['amount'], 2),
+                ])->all(),
+            ],
+            [
+                'title' => 'Driver Entries by Pump',
+                'columns' => ['Pump', 'Driver', 'Entries', 'Qty', 'Discount', 'Bonus', 'Amount'],
+                'rows' => $driverByPump->map(fn ($row) => [
+                    $row['pump'],
+                    $row['driver'],
+                    $row['count'],
+                    number_format($row['quantity'], 2),
+                    number_format($row['discount'], 2),
+                    number_format($row['bonus'], 2),
+                    number_format($row['amount'], 2),
+                ])->all(),
+            ],
+        ];
+
+        $pdf = Pdf::loadView('reports.pdf.report', [
+            'title' => 'Vehicle-wise Purchase Report',
+            'meta' => $this->filterMeta($filters),
+            'summary' => 'Total amount: '.number_format($rows->sum(fn ($row) => $row['amount']), 2).' '.Company::current()->currency,
+            'tables' => $tables,
+        ]);
+
+        return $pdf->download('vehicle-wise.pdf');
+    }
+
     public function exportDriverWise(Request $request): StreamedResponse
     {
         $filters = $request->only(['date_from', 'date_to']);
@@ -352,6 +500,50 @@ class ReportController extends Controller
         );
     }
 
+    public function exportDriverWisePdf(Request $request): Response
+    {
+        $filters = $request->only(['date_from', 'date_to']);
+        $rows = $this->reports->driverWise($filters);
+        $driverByPump = $this->reports->driverEntriesByPump($filters);
+
+        $tables = [
+            [
+                'title' => 'By Driver',
+                'columns' => ['Driver', 'Entries', 'Qty', 'Discount', 'Bonus', 'Amount'],
+                'rows' => $rows->map(fn ($row) => [
+                    $row['driver'],
+                    $row['count'],
+                    number_format($row['quantity'], 2),
+                    number_format($row['discount'], 2),
+                    number_format($row['bonus'], 2),
+                    number_format($row['amount'], 2),
+                ])->all(),
+            ],
+            [
+                'title' => 'Driver Entries by Pump',
+                'columns' => ['Pump', 'Driver', 'Entries', 'Qty', 'Discount', 'Bonus', 'Amount'],
+                'rows' => $driverByPump->map(fn ($row) => [
+                    $row['pump'],
+                    $row['driver'],
+                    $row['count'],
+                    number_format($row['quantity'], 2),
+                    number_format($row['discount'], 2),
+                    number_format($row['bonus'], 2),
+                    number_format($row['amount'], 2),
+                ])->all(),
+            ],
+        ];
+
+        $pdf = Pdf::loadView('reports.pdf.report', [
+            'title' => 'Driver-wise Purchase Report',
+            'meta' => $this->filterMeta($filters),
+            'summary' => 'Total amount: '.number_format($rows->sum(fn ($row) => $row['amount']), 2).' '.Company::current()->currency,
+            'tables' => $tables,
+        ]);
+
+        return $pdf->download('driver-wise.pdf');
+    }
+
     public function exportPayments(Request $request): StreamedResponse
     {
         $filters = $request->only(['date_from', 'date_to', 'pump_id']);
@@ -377,6 +569,34 @@ class ReportController extends Controller
             ],
             [6],
         );
+    }
+
+    public function exportPaymentsPdf(Request $request): Response
+    {
+        $filters = $request->only(['date_from', 'date_to', 'pump_id']);
+        $report = $this->reports->paymentReport($filters);
+
+        $pdf = Pdf::loadView('reports.pdf.report', [
+            'title' => 'Payment Report',
+            'meta' => $this->filterMeta($filters),
+            'summary' => 'Total amount: '.number_format($report['totals']['amount'], 2).' '.Company::current()->currency,
+            'tables' => [
+                [
+                    'title' => 'Payments',
+                    'columns' => ['Date', 'Type', 'Voucher', 'Pump', 'Method', 'Amount'],
+                    'rows' => $report['rows']->map(fn ($row) => [
+                        $row->payment_date->format('d M Y'),
+                        $row->type->label(),
+                        $row->voucher_number,
+                        $row->pump?->name,
+                        $row->payment_method->label(),
+                        number_format((float) $row->amount, 2),
+                    ])->all(),
+                ],
+            ],
+        ]);
+
+        return $pdf->download('payments.pdf');
     }
 
     /**

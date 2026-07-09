@@ -14,6 +14,8 @@
 
         :export="route('reports.monthly-purchases.export', request()->query())"
 
+        :pdf="route('reports.monthly-purchases.pdf', request()->query())"
+
     >
 
         <div class="form-field">

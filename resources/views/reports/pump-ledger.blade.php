@@ -14,6 +14,8 @@
 
         :export="route('reports.pump-ledger.export', request()->query())"
 
+        :pdf="route('reports.pump-ledger.pdf', request()->query())"
+
     >
 
         <div class="form-field">
