@@ -100,11 +100,6 @@
 
             </div>
 
-            @if ($report['byPump']->hasPages())
-                <div class="data-table-footer">
-                    {{ $report['byPump']->links() }}
-                </div>
-            @endif
 
         </div>
 
@@ -168,11 +163,6 @@
 
             </div>
 
-            @if ($report['byVehicle']->hasPages())
-                <div class="data-table-footer">
-                    {{ $report['byVehicle']->links() }}
-                </div>
-            @endif
 
         </div>
 

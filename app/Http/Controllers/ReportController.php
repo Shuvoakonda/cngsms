@@ -31,7 +31,7 @@ class ReportController extends Controller
 
         return view('reports.daily-purchases', [
             'filters' => $filters,
-            'rows' => $this->paginateCollection($report['rows'], $request, 'page'),
+            'rows' => $report['rows'],
             'totals' => $report['totals'],
             'pumps' => $this->reports->activePumps(),
             'vehicles' => $this->reports->activeVehicles(),
@@ -47,9 +47,9 @@ class ReportController extends Controller
             'filters' => $filters,
             'report' => [
                 ...$report,
-                'byPump' => $this->paginateCollection($report['byPump'], $request, 'pump_page'),
-                'byVehicle' => $this->paginateCollection($report['byVehicle'], $request, 'vehicle_page'),
-                'byPumpDriver' => $this->paginateCollection($report['byPumpDriver'], $request, 'driver_page'),
+                'byPump' => $report['byPump'],
+                'byVehicle' => $report['byVehicle'],
+                'byPumpDriver' => $report['byPumpDriver'],
             ],
         ]);
     }
@@ -68,7 +68,7 @@ class ReportController extends Controller
             'filters' => $filters,
             'report' => [
                 ...$report,
-                'entries' => $this->paginateCollection($report['entries'], $request, 'page'),
+                'entries' => $report['entries'],
             ],
             'pumps' => $this->reports->activePumps(),
         ]);
@@ -81,7 +81,8 @@ class ReportController extends Controller
 
         return view('reports.outstanding', [
             'filters' => $filters,
-            'rows' => $this->paginateCollection($rows, $request, 'page'),
+            // send full collection (no pagination) so the view can render all rows with scrolling
+            'rows' => $rows,
             'totals' => [
                 'entries' => $rows->sum('entries'),
                 'discount' => round($rows->sum('discount'), 2),
@@ -104,8 +105,8 @@ class ReportController extends Controller
         $totals = [
             'amount' => round($rows->sum(fn ($row) => $row['amount']), 2),
         ];
-        $rows = $this->paginateCollection($rows, $request, 'page');
-        $driverByPump = $this->paginateCollection($driverByPump, $request, 'driver_page');
+        $rows = $rows; // keep full collection for scrolling/printing
+        $driverByPump = $driverByPump; // keep full collection for scrolling/printing
 
         return view('reports.vehicle-wise', compact('filters', 'rows', 'driverByPump', 'totals'));
     }
@@ -118,8 +119,6 @@ class ReportController extends Controller
         $totals = [
             'amount' => round($rows->sum(fn ($row) => $row['amount']), 2),
         ];
-        $rows = $this->paginateCollection($rows, $request, 'page');
-        $driverByPump = $this->paginateCollection($driverByPump, $request, 'driver_page');
 
         return view('reports.driver-wise', compact('filters', 'rows', 'driverByPump', 'totals'));
     }
@@ -131,7 +130,7 @@ class ReportController extends Controller
 
         return view('reports.payments', [
             'filters' => $filters,
-            'rows' => $this->paginateCollection($report['rows'], $request, 'page'),
+            'rows' => $report['rows'],
             'totals' => $report['totals'],
             'pumps' => $this->reports->activePumps(),
         ]);

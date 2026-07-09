@@ -62,6 +62,8 @@
 
     .data-table-scroll {
         @apply overflow-x-auto;
+        max-height: 72vh;
+        overflow-y: auto;
     }
 
     .data-table {

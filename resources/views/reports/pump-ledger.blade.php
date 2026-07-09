@@ -76,7 +76,7 @@
 
     >
 
-        <x-data-table-card class="report-print-body" :paginator="$report['entries']">
+        <x-data-table-card class="report-print-body">
 
         <thead>
 

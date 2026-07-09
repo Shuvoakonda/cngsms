@@ -106,15 +106,7 @@
 
         <div class="report-print-body mb-6 grid gap-6 lg:grid-cols-2">
 
-            <div class="rounded-2xl bg-white p-5 ring-1 ring-slate-200 print:hidden">
-
-                <h2 class="font-semibold text-slate-900">Due by Pump</h2>
-
-                <div class="mt-4 h-72"><canvas id="outstandingReportChart"></canvas></div>
-
-            </div>
-
-            <x-data-table-card class="lg:col-span-1" :paginator="$rows">
+            <x-data-table-card class="lg:col-span-2">
 
                 <thead>
 
@@ -192,6 +184,6 @@
 
 
 
-    <script type="application/json" id="outstanding-report-chart">@json($chart)</script>
+    
 
 </x-app-layout>

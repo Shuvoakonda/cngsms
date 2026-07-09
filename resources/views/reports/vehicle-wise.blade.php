@@ -26,7 +26,7 @@
 
     <x-reports.print-shell title="Vehicle-wise Purchase Report" :summary="'Total amount: '.number_format($totals['amount'], 2).' '.$company->currency">
 
-        <x-data-table-card class="report-print-body" :paginator="$rows">
+        <x-data-table-card class="report-print-body">
 
         <thead>
 

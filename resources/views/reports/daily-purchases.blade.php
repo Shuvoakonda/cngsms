@@ -110,7 +110,7 @@
 
     >
 
-        <x-data-table-card class="report-print-body" :paginator="$rows">
+        <x-data-table-card class="report-print-body">
 
         <thead>
 
