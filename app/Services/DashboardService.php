@@ -200,7 +200,7 @@ class DashboardService
             ->get()
             ->map(fn ($row) => [
                 'pump' => $row->pump_name,
-                'fuel_type' => $row->fuel_type,
+                'fuel_type' => $row->fuel_type ?: 'cng',
                 'amount' => (float) $row->total_amount,
                 'sold_amount' => (float) $row->sold_amount,
             ]);

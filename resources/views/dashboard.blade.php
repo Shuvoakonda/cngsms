@@ -215,7 +215,7 @@
                             <div class="min-w-0 flex-1">
                                 <p class="truncate font-medium text-slate-900">{{ $pump['pump'] }}</p>
                                 <p class="mt-1 text-xs text-slate-500">
-                                    {{ strtoupper($pump['fuel_type']) }}
+                                    {{ strtoupper((string) ($pump['fuel_type'] ?? 'cng')) }}
                                     <span class="mx-1 text-slate-300">·</span>
                                     Purchased: {{ number_format($pump['amount'], 2) }}
                                 </p>
