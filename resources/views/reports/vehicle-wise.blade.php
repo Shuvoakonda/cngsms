@@ -36,7 +36,7 @@
 
                 <th>Vehicle</th>
 
-                <th class="text-right">Entries</th>
+                <th class="text-right">CNG Slips</th>
 
                 <th class="text-right">Quantity</th>
 
@@ -60,7 +60,7 @@
 
                     <td class="col-primary font-medium" data-label="Vehicle">{{ $row['vehicle'] }}</td>
 
-                    <td class="text-right" data-label="Entries">{{ $row['count'] }}</td>
+                    <td class="text-right" data-label="CNG Slips">{{ $row['count'] }}</td>
 
                     <td class="text-right" data-label="Quantity">{{ number_format($row['quantity'], 2) }}</td>
 

@@ -4,9 +4,9 @@
 
         <div>
 
-            <h1 class="text-2xl font-bold tracking-tight text-slate-900">Daily Purchase Report</h1>
+            <h1 class="text-2xl font-bold tracking-tight text-slate-900">{{ $reportTitle ?? 'Daily Purchase Report' }}</h1>
 
-            <p class="mt-1 text-sm text-slate-600">Filter purchase slips by date, pump, and vehicle.</p>
+            <p class="mt-1 text-sm text-slate-600">{{ $reportDescription ?? 'Filter purchase slips by date, pump, and vehicle.' }}</p>
 
         </div>
 
@@ -16,11 +16,11 @@
 
     <x-reports.filter-card
 
-        :action="route('reports.daily-purchases')"
+        :action="($filters['fuel_type'] ?? null) === 'diesel' ? route('reports.diesel-purchases') : route('reports.daily-purchases')"
 
-        :export="route('reports.daily-purchases.export', request()->query())"
+        :export="route('reports.daily-purchases.export', [...request()->query(), ...(($filters['fuel_type'] ?? null) === 'diesel' ? ['fuel_type' => 'diesel'] : [])])"
 
-        :pdf="route('reports.daily-purchases.pdf', request()->query())"
+        :pdf="route('reports.daily-purchases.pdf', [...request()->query(), ...(($filters['fuel_type'] ?? null) === 'diesel' ? ['fuel_type' => 'diesel'] : [])])"
 
     >
 
@@ -78,6 +78,7 @@
 
         </div>
 
+        @if (($filters['fuel_type'] ?? null) !== 'diesel')
         <div class="form-field">
 
             <x-input-label for="fuel_type" value="Fuel Type" />
@@ -91,6 +92,7 @@
             </x-select-input>
 
         </div>
+        @endif
 
         <div class="form-field">
 
@@ -122,15 +124,15 @@
         </div>
 
         <div class="report-summary-card report-summary-card-teal">
-            <p class="report-summary-label">Entries</p>
-            <p class="report-summary-value">{{ number_format($totals['count']) }}</p>
-            <p class="report-summary-note">Purchase slips</p>
+            <p class="report-summary-label">{{ ($filters['fuel_type'] ?? null) === 'diesel' ? 'Diesel Quantity' : 'CNG Slips' }}</p>
+            <p class="report-summary-value">{{ ($filters['fuel_type'] ?? null) === 'diesel' ? number_format($totals['quantity'], 2) : number_format($totals['count']) }}</p>
+            <p class="report-summary-note">{{ ($filters['fuel_type'] ?? null) === 'diesel' ? 'Liter' : 'Diesel excluded from count' }}</p>
         </div>
 
         <div class="report-summary-card report-summary-card-amber">
-            <p class="report-summary-label">Quantity</p>
-            <p class="report-summary-value">{{ number_format($totals['quantity'], 2) }}</p>
-            <p class="report-summary-note">{{ $company->quantity_unit }}</p>
+                <p class="report-summary-label">{{ ($filters['fuel_type'] ?? null) === 'diesel' ? 'Diesel Amount' : 'Quantity' }}</p>
+                <p class="report-summary-value">{{ ($filters['fuel_type'] ?? null) === 'diesel' ? number_format($totals['diesel_amount'], 2) : number_format($totals['quantity'], 2) }}</p>
+            <p class="report-summary-note">{{ ($filters['fuel_type'] ?? null) === 'diesel' ? 'Liter' : $company->quantity_unit }}</p>
         </div>
 
         <div class="report-summary-card report-summary-card-violet">
@@ -145,6 +147,7 @@
             <p class="report-summary-note">Still available</p>
         </div>
 
+        @if (($filters['fuel_type'] ?? null) !== 'diesel')
         <div class="report-summary-card report-summary-card-emerald">
             <p class="report-summary-label">CNG</p>
             <p class="report-summary-value">{{ number_format($totals['cng_amount'], 2) }}</p>
@@ -156,6 +159,7 @@
             <p class="report-summary-value">{{ number_format($totals['diesel_amount'], 2) }}</p>
             <p class="report-summary-note">{{ $company->currency }}</p>
         </div>
+        @endif
 
         <div class="report-summary-card report-summary-card-slate">
             <p class="report-summary-label">Discount</p>
@@ -175,7 +179,7 @@
 
     <x-reports.print-shell
 
-        title="Daily Purchase Report"
+        :title="$reportTitle ?? 'Daily Purchase Report'"
 
         :meta="collect([
 

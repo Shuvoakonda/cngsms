@@ -31,7 +31,7 @@ class ReportService
         return [
             'rows' => $rows,
             'totals' => [
-                'count' => $rows->count(),
+                'count' => $this->cngSlipCount($rows),
                 'quantity' => round((float) $rows->sum('quantity'), 2),
                 'discount' => $this->sumDiscounts($rows),
                 'bonus' => $this->sumBonuses($rows),
@@ -66,7 +66,7 @@ class ReportService
 
             return [
                 'label' => $pump?->name ?? 'Unknown',
-                'count' => $items->count(),
+                'count' => $this->cngSlipCount($items),
                 'quantity' => round((float) $items->sum('quantity'), 2),
                 'rate' => $this->averageRate($items),
                 'discount' => $this->sumDiscounts($items),
@@ -78,7 +78,7 @@ class ReportService
         $byVehicle = $purchases->groupBy('vehicle_id')->map(function (Collection $items) {
             return [
                 'label' => $items->first()?->displayVehicle() ?? 'Guest',
-                'count' => $items->count(),
+                'count' => $this->cngSlipCount($items),
                 'quantity' => round((float) $items->sum('quantity'), 2),
                 'rate' => $this->averageRate($items),
                 'discount' => $this->sumDiscounts($items),
@@ -97,7 +97,7 @@ class ReportService
                 'status' => $filters['status'] ?? null,
             ]),
             'totals' => [
-                'count' => $purchases->count(),
+                'count' => $this->cngSlipCount($purchases),
                 'quantity' => round((float) $purchases->sum('quantity'), 2),
                 'discount' => $this->sumDiscounts($purchases),
                 'bonus' => $this->sumBonuses($purchases),
@@ -143,7 +143,7 @@ class ReportService
                 return [
                     'pump' => $first?->pump?->name ?? 'Unknown',
                     'driver' => $first?->displayDriver() ?? 'Guest',
-                    'count' => $items->count(),
+                    'count' => $this->cngSlipCount($items),
                     'quantity' => round((float) $items->sum('quantity'), 2),
                     'rate' => $this->averageRate($items),
                     'discount' => $this->sumDiscounts($items),
@@ -341,7 +341,7 @@ class ReportService
             ->map(function (Collection $items) {
                 return [
                     'vehicle' => $items->first()?->displayVehicle() ?? 'Guest',
-                    'count' => $items->count(),
+                    'count' => $this->cngSlipCount($items),
                     'quantity' => round((float) $items->sum('quantity'), 2),
                     'rate' => $this->averageRate($items),
                     'discount' => $this->sumDiscounts($items),
@@ -368,7 +368,7 @@ class ReportService
             ->map(function (Collection $items) {
                 return [
                     'driver' => $items->first()?->displayDriver() ?? 'Guest',
-                    'count' => $items->count(),
+                    'count' => $this->cngSlipCount($items),
                     'quantity' => round((float) $items->sum('quantity'), 2),
                     'rate' => $this->averageRate($items),
                     'discount' => $this->sumDiscounts($items),
@@ -483,6 +483,11 @@ class ReportService
         }
 
         return round((float) $purchases->sum(fn (Purchase $purchase) => (float) $purchase->rate * (float) $purchase->quantity) / $quantity, 2);
+    }
+
+    private function cngSlipCount(Collection $purchases): int
+    {
+        return $purchases->where('fuel_type', FuelType::CNG)->count();
     }
 
     public function activePumps(): Collection

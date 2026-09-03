@@ -8,7 +8,9 @@
 
         ['label' => 'Payments', 'route' => 'payments.index', 'match' => 'payments.*', 'icon' => 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z'],
 
-        ['label' => 'Reports', 'route' => 'reports.index', 'match' => 'reports.*', 'icon' => 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'],
+        ['label' => 'Reports', 'route' => 'reports.index', 'match' => 'reports.index', 'icon' => 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'],
+
+        ['label' => 'Diesel Sales', 'route' => 'reports.diesel-purchases', 'match' => 'reports.diesel-purchases', 'icon' => 'M7 7h10l1 3v9a1 1 0 01-1 1H7a1 1 0 01-1-1v-9l1-3zm2 0V5a3 3 0 016 0v2m-6 5h.01M15 12h.01M9 16h6'],
 
     ];
 

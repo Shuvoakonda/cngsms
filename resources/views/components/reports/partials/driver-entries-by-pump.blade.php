@@ -12,7 +12,7 @@
                 <tr>
                     <th>Pump</th>
                     <th>Driver</th>
-                    <th class="text-right">Entries</th>
+                    <th class="text-right">CNG Slips</th>
                     <th class="text-right">Qty</th>
                     <th class="text-right">Rate</th>
                     <th class="text-right">Discount</th>
@@ -25,7 +25,7 @@
                     <tr>
                         <td class="col-primary font-medium" data-label="Pump">{{ $row['pump'] }}</td>
                         <td data-label="Driver">{{ $row['driver'] }}</td>
-                        <td class="text-right font-medium" data-label="Entries">{{ $row['count'] }}</td>
+                        <td class="text-right font-medium" data-label="CNG Slips">{{ $row['count'] }}</td>
                         <td class="text-right" data-label="Qty">{{ number_format($row['quantity'], 2) }}</td>
                         <td class="text-right" data-label="Rate">{{ number_format($row['rate'], 2) }}</td>
                         <td class="text-right" data-label="Discount">{{ number_format($row['discount'], 2) }}</td>

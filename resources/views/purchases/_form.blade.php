@@ -23,7 +23,7 @@
 
         <div class="form-field">
             <x-input-label for="purchase_fuel_type" value="Fuel Type" />
-            <x-select-input id="purchase_fuel_type" name="fuel_type" required>
+            <x-select-input id="purchase_fuel_type" name="fuel_type" required @change="syncQuantityUnit()">
                 <option value="cng" @selected(old('fuel_type', 'cng') === 'cng')>CNG</option>
                 <option value="diesel" @selected(old('fuel_type') === 'diesel')>Diesel</option>
             </x-select-input>
@@ -69,7 +69,9 @@
         </div>
 
         <div class="form-field">
-            <x-input-label for="purchase_quantity" value="Quantity ({{ $company->quantity_unit ?? 'KG' }})" />
+            <x-input-label for="purchase_quantity">
+                Quantity (<span x-text="quantityUnit"></span>)
+            </x-input-label>
             <x-text-input id="purchase_quantity" name="quantity" type="number" step="0.01" min="0.01" :value="old('quantity')" required inputmode="decimal" @input="updateAmount()" />
             <x-input-error :messages="$errors->get('quantity')" />
         </div>

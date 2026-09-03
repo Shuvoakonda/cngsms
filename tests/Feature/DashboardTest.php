@@ -131,6 +131,51 @@ test('monthly purchase summary supports fuel type filtering and split totals', f
         ->and($report['totals']['diesel_amount'])->toBe(0.0);
 });
 
+test('diesel purchases do not increase the cng slip count', function () {
+    $pump = Pump::query()->create(['name' => 'Mixed Fuel Pump', 'status' => 'active']);
+    $user = User::factory()->create();
+
+    Purchase::query()->create([
+        'purchase_date' => today(),
+        'pump_id' => $pump->id,
+        'slip_number' => 'CNG-COUNT-01',
+        'fuel_type' => 'cng',
+        'quantity' => 2,
+        'rate' => 20,
+        'amount' => 40,
+        'created_by' => $user->id,
+    ]);
+
+    Purchase::query()->create([
+        'purchase_date' => today(),
+        'pump_id' => $pump->id,
+        'slip_number' => 'DIESEL-COUNT-01',
+        'fuel_type' => 'diesel',
+        'quantity' => 3,
+        'rate' => 100,
+        'amount' => 300,
+        'created_by' => $user->id,
+    ]);
+
+    $report = app(\App\Services\ReportService::class)->dailyPurchases([]);
+
+    expect($report['totals']['count'])->toBe(1)
+        ->and($report['totals']['cng_amount'])->toBe(40.0)
+        ->and($report['totals']['diesel_amount'])->toBe(300.0)
+        ->and($report['totals']['amount'])->toBe(340.0);
+});
+
+    test('diesel sales report shows the diesel-only view', function () {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+        ->get(route('reports.diesel-purchases'))
+        ->assertOk()
+        ->assertSee('Diesel Sales Report')
+        ->assertSee('Diesel Quantity')
+        ->assertDontSee('Fuel Type');
+    });
+
 test('new purchases default to unsold and can be marked sold in reports totals', function () {
     $pump = Pump::query()->create(['name' => 'Status Pump', 'status' => 'active']);
 

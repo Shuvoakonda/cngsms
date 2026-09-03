@@ -9,6 +9,7 @@
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         @foreach ([
             ['Daily Purchases', 'Purchase slips by date, pump, and vehicle.', 'reports.daily-purchases'],
+            ['Diesel Sales', 'Diesel quantity, amount, rate, and sold status.', 'reports.diesel-purchases'],
             ['Monthly Summary', 'Pump and vehicle totals for a selected month.', 'reports.monthly-purchases'],
             ['Pump Ledger', 'Debit/credit statement with running balance.', 'reports.pump-ledger'],
             ['Pump Summary', 'Entries, due, and advance balance per pump.', 'reports.outstanding'],

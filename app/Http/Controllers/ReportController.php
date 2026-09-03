@@ -40,6 +40,25 @@ class ReportController extends Controller
         ]);
     }
 
+    public function dieselPurchases(Request $request): View
+    {
+        $filters = [
+            ...$request->only(['date_from', 'date_to', 'pump_id', 'vehicle_id', 'status']),
+            'fuel_type' => 'diesel',
+        ];
+        $report = $this->reports->dailyPurchases($filters);
+
+        return view('reports.daily-purchases', [
+            'filters' => $filters,
+            'rows' => $report['rows'],
+            'totals' => $report['totals'],
+            'pumps' => $this->reports->activePumps(),
+            'vehicles' => $this->reports->activeVehicles(),
+            'reportTitle' => 'Diesel Sales Report',
+            'reportDescription' => 'Diesel quantity, rate, amount, and sale status.',
+        ]);
+    }
+
     public function monthlyPurchases(Request $request): View
     {
         $filters = [
@@ -168,7 +187,7 @@ class ReportController extends Controller
             ])->all(),
             $this->filterMeta($filters),
             [
-                'Entries' => $report['totals']['count'],
+                'CNG Slips' => $report['totals']['count'],
                 'Quantity' => number_format($report['totals']['quantity'], 2).' '.$company->quantity_unit,
                 'Discount' => number_format($report['totals']['discount'], 2).' '.$company->currency,
                 'Bonus' => number_format($report['totals']['bonus'], 2).' '.$company->currency,
@@ -243,11 +262,11 @@ class ReportController extends Controller
         return $this->excel->download(
             'monthly-purchases.xlsx',
             'Monthly Purchase Summary',
-            ['Group', 'Entries', 'Quantity', 'Rate', 'Discount', 'Bonus', 'Amount'],
+            ['Group', 'CNG Slips', 'Quantity', 'Rate', 'Discount', 'Bonus', 'Amount'],
             $rows->all(),
             $this->filterMeta($filters),
             [
-                'Entries' => $report['totals']['count'],
+                'CNG Slips' => $report['totals']['count'],
                 'Sold' => $report['totals']['sold_count'],
                 'Unsold' => $report['totals']['unsold_count'],
                 'Quantity' => number_format($report['totals']['quantity'], 2).' '.$company->quantity_unit,
@@ -269,7 +288,7 @@ class ReportController extends Controller
         $tables = [
             [
                 'title' => 'By Pump',
-                'columns' => ['Pump', 'Entries', 'Qty', 'Rate', 'Discount', 'Bonus', 'Amount'],
+                'columns' => ['Pump', 'CNG Slips', 'Qty', 'Rate', 'Discount', 'Bonus', 'Amount'],
                 'rows' => $report['byPump']->map(fn ($row) => [
                     $row['label'],
                     $row['count'],
@@ -282,7 +301,7 @@ class ReportController extends Controller
             ],
             [
                 'title' => 'By Vehicle',
-                'columns' => ['Vehicle', 'Entries', 'Qty', 'Rate', 'Discount', 'Bonus', 'Amount'],
+                'columns' => ['Vehicle', 'CNG Slips', 'Qty', 'Rate', 'Discount', 'Bonus', 'Amount'],
                 'rows' => $report['byVehicle']->map(fn ($row) => [
                     $row['label'],
                     $row['count'],
@@ -295,7 +314,7 @@ class ReportController extends Controller
             ],
             [
                 'title' => 'Driver Entries by Pump',
-                'columns' => ['Pump', 'Driver', 'Entries', 'Qty', 'Rate', 'Discount', 'Bonus', 'Amount'],
+                'columns' => ['Pump', 'Driver', 'CNG Slips', 'Qty', 'Rate', 'Discount', 'Bonus', 'Amount'],
                 'rows' => $report['byPumpDriver']->map(fn ($row) => [
                     $row['pump'],
                     $row['driver'],
@@ -469,11 +488,11 @@ class ReportController extends Controller
         return $this->excel->download(
             'vehicle-wise.xlsx',
             'Vehicle-wise Purchase Report',
-            ['Group', 'Entries', 'Quantity', 'Rate', 'Discount', 'Bonus', 'Amount'],
+            ['Group', 'CNG Slips', 'Quantity', 'Rate', 'Discount', 'Bonus', 'Amount'],
             $exportRows->all(),
             $this->filterMeta($filters),
             [
-                'Entries' => $rows->sum(fn ($row) => $row['count']),
+                'CNG Slips' => $rows->sum(fn ($row) => $row['count']),
                 'Discount' => number_format($rows->sum(fn ($row) => $row['discount']), 2).' '.$company->currency,
                 'Bonus' => number_format($rows->sum(fn ($row) => $row['bonus']), 2).' '.$company->currency,
                 'Amount' => number_format($rows->sum(fn ($row) => $row['amount']), 2).' '.$company->currency,
@@ -491,7 +510,7 @@ class ReportController extends Controller
         $tables = [
             [
                 'title' => 'By Vehicle',
-                'columns' => ['Vehicle', 'Entries', 'Qty', 'Rate', 'Discount', 'Bonus', 'Amount'],
+                'columns' => ['Vehicle', 'CNG Slips', 'Qty', 'Rate', 'Discount', 'Bonus', 'Amount'],
                 'rows' => $rows->map(fn ($row) => [
                     $row['vehicle'],
                     $row['count'],
@@ -504,7 +523,7 @@ class ReportController extends Controller
             ],
             [
                 'title' => 'Driver Entries by Pump',
-                'columns' => ['Pump', 'Driver', 'Entries', 'Qty', 'Rate', 'Discount', 'Bonus', 'Amount'],
+                'columns' => ['Pump', 'Driver', 'CNG Slips', 'Qty', 'Rate', 'Discount', 'Bonus', 'Amount'],
                 'rows' => $driverByPump->map(fn ($row) => [
                     $row['pump'],
                     $row['driver'],
@@ -556,11 +575,11 @@ class ReportController extends Controller
         return $this->excel->download(
             'driver-wise.xlsx',
             'Driver-wise Purchase Report',
-            ['Group', 'Entries', 'Quantity', 'Rate', 'Discount', 'Bonus', 'Amount'],
+            ['Group', 'CNG Slips', 'Quantity', 'Rate', 'Discount', 'Bonus', 'Amount'],
             $exportRows->all(),
             $this->filterMeta($filters),
             [
-                'Entries' => $rows->sum(fn ($row) => $row['count']),
+                'CNG Slips' => $rows->sum(fn ($row) => $row['count']),
                 'Discount' => number_format($rows->sum(fn ($row) => $row['discount']), 2).' '.$company->currency,
                 'Bonus' => number_format($rows->sum(fn ($row) => $row['bonus']), 2).' '.$company->currency,
                 'Amount' => number_format($rows->sum(fn ($row) => $row['amount']), 2).' '.$company->currency,
@@ -578,7 +597,7 @@ class ReportController extends Controller
         $tables = [
             [
                 'title' => 'By Driver',
-                'columns' => ['Driver', 'Entries', 'Qty', 'Rate', 'Discount', 'Bonus', 'Amount'],
+                'columns' => ['Driver', 'CNG Slips', 'Qty', 'Rate', 'Discount', 'Bonus', 'Amount'],
                 'rows' => $rows->map(fn ($row) => [
                     $row['driver'],
                     $row['count'],
@@ -591,12 +610,13 @@ class ReportController extends Controller
             ],
             [
                 'title' => 'Driver Entries by Pump',
-                'columns' => ['Pump', 'Driver', 'Entries', 'Qty', 'Discount', 'Bonus', 'Amount'],
+                'columns' => ['Pump', 'Driver', 'CNG Slips', 'Qty', 'Rate', 'Discount', 'Bonus', 'Amount'],
                 'rows' => $driverByPump->map(fn ($row) => [
                     $row['pump'],
                     $row['driver'],
                     $row['count'],
                     number_format($row['quantity'], 2),
+                    number_format($row['rate'], 2),
                     number_format($row['discount'], 2),
                     number_format($row['bonus'], 2),
                     number_format($row['amount'], 2),

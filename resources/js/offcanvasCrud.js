@@ -12,6 +12,7 @@ export function offcanvasCrud(config) {
                 this.$nextTick(() => this.openEdit(config.recordsById[config.deepLinkEditId]));
             } else if (this.panelOpen) {
                 this.$nextTick(() => {
+                    this.syncQuantityUnit();
                     this.updateAmount();
                     this.syncGuestPurchaseState();
                 });
@@ -30,6 +31,7 @@ export function offcanvasCrud(config) {
 
             this.$nextTick(() => {
                 this.resetForm(config.defaults ?? {});
+                this.syncQuantityUnit();
                 this.updateAmount();
                 this.syncGuestPurchaseState();
             });
@@ -51,6 +53,7 @@ export function offcanvasCrud(config) {
                 }
 
                 this.fillForm(record);
+                this.syncQuantityUnit();
                 this.updateAmount();
                 this.syncGuestPurchaseState();
             });
@@ -113,6 +116,12 @@ export function offcanvasCrud(config) {
 
         calculatedAmount: '0.00',
         guestPurchase: false,
+        quantityUnit: 'KG',
+
+        syncQuantityUnit() {
+            const fuelType = this.$refs.form?.elements.fuel_type?.value;
+            this.quantityUnit = fuelType === 'diesel' ? 'Liter' : 'KG';
+        },
 
         updateAmount() {
             const form = this.$refs.form;

@@ -31,6 +31,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('index');
         Route::get('/daily-purchases', [ReportController::class, 'dailyPurchases'])->name('daily-purchases');
+        Route::get('/diesel-purchases', [ReportController::class, 'dieselPurchases'])->name('diesel-purchases');
         Route::get('/daily-purchases/export', [ReportController::class, 'exportDailyPurchases'])->name('daily-purchases.export');
         Route::get('/daily-purchases/pdf', [ReportController::class, 'exportDailyPurchasesPdf'])->name('daily-purchases.pdf');
         Route::get('/monthly-purchases/export', [ReportController::class, 'exportMonthlyPurchases'])->name('monthly-purchases.export');

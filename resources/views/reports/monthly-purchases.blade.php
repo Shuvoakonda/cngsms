@@ -60,7 +60,7 @@
 
     <div class="report-screen-only mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-6 rounded-2xl bg-white p-4 ring-1 ring-slate-200">
 
-        <div><p class="text-xs text-slate-500">Entries</p><p class="text-2xl font-bold">{{ $report['totals']['count'] }}</p></div>
+        <div><p class="text-xs text-slate-500">CNG Slips</p><p class="text-2xl font-bold">{{ $report['totals']['count'] }}</p></div>
         <div><p class="text-xs text-slate-500">Sold</p><p class="text-2xl font-bold">{{ $report['totals']['sold_count'] }}</p></div>
         <div><p class="text-xs text-slate-500">Unsold</p><p class="text-2xl font-bold">{{ $report['totals']['unsold_count'] }}</p></div>
         <div><p class="text-xs text-slate-500">Quantity</p><p class="text-2xl font-bold">{{ number_format($report['totals']['quantity'], 2) }}</p></div>
@@ -91,7 +91,7 @@
 
                             <th>Pump</th>
 
-                            <th class="text-right">Entries</th>
+                            <th class="text-right">CNG Slips</th>
 
                             <th class="text-right">Qty</th>
 
@@ -115,7 +115,7 @@
 
                                 <td class="col-primary" data-label="Pump">{{ $row['label'] }}</td>
 
-                                <td class="text-right" data-label="Entries">{{ $row['count'] }}</td>
+                                <td class="text-right" data-label="CNG Slips">{{ $row['count'] }}</td>
 
                                 <td class="text-right" data-label="Qty">{{ number_format($row['quantity'], 2) }}</td>
 
@@ -158,7 +158,7 @@
 
                             <th>Vehicle</th>
 
-                            <th class="text-right">Entries</th>
+                            <th class="text-right">CNG Slips</th>
 
                             <th class="text-right">Qty</th>
 
@@ -182,7 +182,7 @@
 
                                 <td class="col-primary" data-label="Vehicle">{{ $row['label'] }}</td>
 
-                                <td class="text-right" data-label="Entries">{{ $row['count'] }}</td>
+                                <td class="text-right" data-label="CNG Slips">{{ $row['count'] }}</td>
 
                                 <td class="text-right" data-label="Qty">{{ number_format($row['quantity'], 2) }}</td>
 
