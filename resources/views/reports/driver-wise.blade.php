@@ -40,6 +40,8 @@
 
                 <th class="text-right">Quantity</th>
 
+                <th class="text-right">Rate</th>
+
                 <th class="text-right">Discount</th>
 
                 <th class="text-right">Bonus</th>
@@ -62,6 +64,8 @@
 
                     <td class="text-right" data-label="Quantity">{{ number_format($row['quantity'], 2) }}</td>
 
+                    <td class="text-right" data-label="Rate">{{ number_format($row['rate'], 2) }}</td>
+
                     <td class="text-right" data-label="Discount">{{ number_format($row['discount'], 2) }}</td>
 
                     <td class="text-right" data-label="Bonus">{{ number_format($row['bonus'], 2) }}</td>
@@ -72,7 +76,7 @@
 
             @empty
 
-                <tr class="data-table-empty-row"><td colspan="6" class="data-table-empty">No data.</td></tr>
+                <tr class="data-table-empty-row"><td colspan="7" class="data-table-empty">No data.</td></tr>
 
             @endforelse
 

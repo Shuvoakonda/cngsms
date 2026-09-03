@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\FuelType;
+use App\Enums\PurchaseStatus;
 use App\Models\Driver;
 use App\Models\Payment;
 use App\Models\Pump;
@@ -34,6 +36,10 @@ class ReportService
                 'discount' => $this->sumDiscounts($rows),
                 'bonus' => $this->sumBonuses($rows),
                 'amount' => round((float) $rows->sum('amount'), 2),
+                'cng_amount' => round((float) $rows->where('fuel_type', FuelType::CNG)->sum('amount'), 2),
+                'diesel_amount' => round((float) $rows->where('fuel_type', FuelType::Diesel)->sum('amount'), 2),
+                'sold_count' => $rows->where('status', PurchaseStatus::Sold)->count(),
+                'unsold_count' => $rows->where('status', PurchaseStatus::Unsold)->count(),
             ],
         ];
     }
@@ -51,6 +57,8 @@ class ReportService
             ->with(['pump:id,name', 'vehicle:id,vehicle_number'])
             ->whereYear('purchase_date', (int) $year)
             ->whereMonth('purchase_date', (int) $monthNum)
+            ->when(! empty($filters['fuel_type']), fn ($query) => $query->where('fuel_type', $filters['fuel_type']))
+            ->when(! empty($filters['status']), fn ($query) => $query->where('status', $filters['status']))
             ->get();
 
         $byPump = $purchases->groupBy('pump_id')->map(function (Collection $items) {
@@ -60,6 +68,7 @@ class ReportService
                 'label' => $pump?->name ?? 'Unknown',
                 'count' => $items->count(),
                 'quantity' => round((float) $items->sum('quantity'), 2),
+                'rate' => $this->averageRate($items),
                 'discount' => $this->sumDiscounts($items),
                 'bonus' => $this->sumBonuses($items),
                 'amount' => round((float) $items->sum('amount'), 2),
@@ -71,6 +80,7 @@ class ReportService
                 'label' => $items->first()?->displayVehicle() ?? 'Guest',
                 'count' => $items->count(),
                 'quantity' => round((float) $items->sum('quantity'), 2),
+                'rate' => $this->averageRate($items),
                 'discount' => $this->sumDiscounts($items),
                 'bonus' => $this->sumBonuses($items),
                 'amount' => round((float) $items->sum('amount'), 2),
@@ -81,13 +91,21 @@ class ReportService
             'month' => $month,
             'byPump' => $byPump,
             'byVehicle' => $byVehicle,
-            'byPumpDriver' => $this->driverEntriesByPump(['month' => $month]),
+            'byPumpDriver' => $this->driverEntriesByPump([
+                'month' => $month,
+                'fuel_type' => $filters['fuel_type'] ?? null,
+                'status' => $filters['status'] ?? null,
+            ]),
             'totals' => [
                 'count' => $purchases->count(),
                 'quantity' => round((float) $purchases->sum('quantity'), 2),
                 'discount' => $this->sumDiscounts($purchases),
                 'bonus' => $this->sumBonuses($purchases),
                 'amount' => round((float) $purchases->sum('amount'), 2),
+                'cng_amount' => round((float) $purchases->where('fuel_type', FuelType::CNG)->sum('amount'), 2),
+                'diesel_amount' => round((float) $purchases->where('fuel_type', FuelType::Diesel)->sum('amount'), 2),
+                'sold_count' => $purchases->where('status', PurchaseStatus::Sold)->count(),
+                'unsold_count' => $purchases->where('status', PurchaseStatus::Unsold)->count(),
             ],
         ];
     }
@@ -105,6 +123,14 @@ class ReportService
             [$year, $monthNum] = explode('-', $filters['month']);
             $query->whereYear('purchase_date', (int) $year)
                 ->whereMonth('purchase_date', (int) $monthNum);
+
+            if (! empty($filters['fuel_type'])) {
+                $query->where('fuel_type', $filters['fuel_type']);
+            }
+
+            if (! empty($filters['status'])) {
+                $query->where('status', $filters['status']);
+            }
         } else {
             $this->applyPurchaseFilters($query, $filters);
         }
@@ -119,6 +145,7 @@ class ReportService
                     'driver' => $first?->displayDriver() ?? 'Guest',
                     'count' => $items->count(),
                     'quantity' => round((float) $items->sum('quantity'), 2),
+                    'rate' => $this->averageRate($items),
                     'discount' => $this->sumDiscounts($items),
                     'bonus' => $this->sumBonuses($items),
                     'amount' => round((float) $items->sum('amount'), 2),
@@ -316,6 +343,7 @@ class ReportService
                     'vehicle' => $items->first()?->displayVehicle() ?? 'Guest',
                     'count' => $items->count(),
                     'quantity' => round((float) $items->sum('quantity'), 2),
+                    'rate' => $this->averageRate($items),
                     'discount' => $this->sumDiscounts($items),
                     'bonus' => $this->sumBonuses($items),
                     'amount' => round((float) $items->sum('amount'), 2),
@@ -342,6 +370,7 @@ class ReportService
                     'driver' => $items->first()?->displayDriver() ?? 'Guest',
                     'count' => $items->count(),
                     'quantity' => round((float) $items->sum('quantity'), 2),
+                    'rate' => $this->averageRate($items),
                     'discount' => $this->sumDiscounts($items),
                     'bonus' => $this->sumBonuses($items),
                     'amount' => round((float) $items->sum('amount'), 2),
@@ -425,6 +454,14 @@ class ReportService
                 $query->where('vehicle_id', $filters['vehicle_id']);
             }
         }
+
+        if (! empty($filters['fuel_type'])) {
+            $query->where('fuel_type', $filters['fuel_type']);
+        }
+
+        if (! empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
     }
 
     private function sumDiscounts(Collection $purchases): float
@@ -435,6 +472,17 @@ class ReportService
     private function sumBonuses(Collection $purchases): float
     {
         return round((float) $purchases->sum(fn (Purchase $purchase) => $purchase->bonusAmount()), 2);
+    }
+
+    private function averageRate(Collection $purchases): float
+    {
+        $quantity = (float) $purchases->sum('quantity');
+
+        if ($quantity <= 0) {
+            return 0.0;
+        }
+
+        return round((float) $purchases->sum(fn (Purchase $purchase) => (float) $purchase->rate * (float) $purchase->quantity) / $quantity, 2);
     }
 
     public function activePumps(): Collection

@@ -23,6 +23,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/search', SearchController::class)->name('search');
 
     Route::resource('purchases', PurchaseController::class)->except(['show', 'create', 'edit']);
+    Route::patch('purchases/{purchase}/toggle-status', [PurchaseController::class, 'toggleStatus'])->name('purchases.toggle-status');
     Route::post('purchases/{purchase}/restore', [PurchaseController::class, 'restore'])->name('purchases.restore');
     Route::resource('payments', PaymentController::class)->except(['show', 'create', 'edit']);
     Route::post('payments/{payment}/restore', [PaymentController::class, 'restore'])->name('payments.restore');

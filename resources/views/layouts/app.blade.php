@@ -15,7 +15,7 @@
         <div class="flex min-h-screen">
             @include('layouts.partials.sidebar')
 
-            <div class="flex min-h-screen flex-1 flex-col lg:pl-64">
+            <div class="flex min-h-screen min-w-0 flex-1 flex-col lg:pl-64">
                 @include('layouts.partials.topbar')
 
                 @if (isset($header))
@@ -26,8 +26,8 @@
                     </header>
                 @endif
 
-                <main class="flex-1 px-4 py-8 sm:px-6 lg:px-10 xl:px-12">
-                    <div class="mx-auto max-w-7xl">
+                <main class="min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-10 xl:px-12">
+                    <div class="mx-auto min-w-0 max-w-7xl">
                         {{ $slot }}
                     </div>
                 </main>

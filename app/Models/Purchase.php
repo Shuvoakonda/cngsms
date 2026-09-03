@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\FuelType;
+use App\Enums\PurchaseStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +14,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'driver_id',
     'guest_reference',
     'pump_id',
+    'fuel_type',
+    'status',
     'slip_number',
     'quantity',
     'rate',
@@ -27,10 +31,16 @@ class Purchase extends Model
 {
     use \Illuminate\Database\Eloquent\SoftDeletes;
 
+    protected $attributes = [
+        'status' => 'unsold',
+    ];
+
     protected function casts(): array
     {
         return [
             'purchase_date' => 'date',
+            'fuel_type' => FuelType::class,
+            'status' => PurchaseStatus::class,
             'quantity' => 'decimal:2',
             'rate' => 'decimal:2',
             'discount_value' => 'decimal:2',

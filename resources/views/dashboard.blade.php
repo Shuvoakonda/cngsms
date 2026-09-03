@@ -12,7 +12,7 @@
     </x-slot>
 
     <div class="space-y-6 pb-8">
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
             <div class="stat-card group">
                 <div class="flex items-center justify-between">
                     <p class="text-sm font-medium text-slate-500">Today's Purchases</p>
@@ -46,6 +46,26 @@
                     <span class="text-slate-700">{{ number_format($stats['monthly_payment'], 2) }}</span>
                 </p>
                 <p class="mt-1 text-xs text-slate-400">Purchase / Payment</p>
+            </div>
+            <div class="stat-card group">
+                <div class="flex items-center justify-between">
+                    <p class="text-sm font-medium text-slate-500">Today CNG</p>
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition-transform group-hover:scale-110 group-hover:bg-emerald-100">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                    </div>
+                </div>
+                <p class="mt-2 text-2xl font-bold text-slate-900">{{ number_format($stats['today_cng_purchase'], 2) }}</p>
+                <p class="mt-1 text-xs text-slate-400">CNG</p>
+            </div>
+            <div class="stat-card group">
+                <div class="flex items-center justify-between">
+                    <p class="text-sm font-medium text-slate-500">Today Diesel</p>
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600 transition-transform group-hover:scale-110 group-hover:bg-amber-100">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                </div>
+                <p class="mt-2 text-2xl font-bold text-slate-900">{{ number_format($stats['today_diesel_purchase'], 2) }}</p>
+                <p class="mt-1 text-xs text-slate-400">Diesel</p>
             </div>
             <div @class([
                 'stat-card group',

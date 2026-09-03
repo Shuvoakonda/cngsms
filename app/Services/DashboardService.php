@@ -19,9 +19,21 @@ class DashboardService
         return [
             'today_purchase' => (float) Purchase::query()->whereDate('purchase_date', $today)->sum('amount'),
             'today_payment' => (float) Payment::query()->whereDate('payment_date', $today)->sum('amount'),
+            'today_cng_purchase' => (float) Purchase::query()->whereDate('purchase_date', $today)->where('fuel_type', 'cng')->sum('amount'),
+            'today_diesel_purchase' => (float) Purchase::query()->whereDate('purchase_date', $today)->where('fuel_type', 'diesel')->sum('amount'),
             'monthly_purchase' => (float) Purchase::query()
                 ->whereYear('purchase_date', $today->year)
                 ->whereMonth('purchase_date', $today->month)
+                ->sum('amount'),
+            'monthly_cng_purchase' => (float) Purchase::query()
+                ->whereYear('purchase_date', $today->year)
+                ->whereMonth('purchase_date', $today->month)
+                ->where('fuel_type', 'cng')
+                ->sum('amount'),
+            'monthly_diesel_purchase' => (float) Purchase::query()
+                ->whereYear('purchase_date', $today->year)
+                ->whereMonth('purchase_date', $today->month)
+                ->where('fuel_type', 'diesel')
                 ->sum('amount'),
             'monthly_payment' => (float) Payment::query()
                 ->whereYear('payment_date', $today->year)

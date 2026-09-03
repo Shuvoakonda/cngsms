@@ -28,6 +28,8 @@
 
             'pump_id' => '',
 
+            'fuel_type' => 'cng',
+
             'slip_number' => '',
 
             'vehicle_id' => '',
@@ -153,17 +155,26 @@
             </div>
 
             <div class="form-field">
-                <x-input-label for="filter_status" value="Status" />
-                <x-select-input id="filter_status" name="status">
+                <x-input-label for="filter_sale_status" value="Sale Status" />
+                <x-select-input id="filter_sale_status" name="status">
+                    <option value="">All status</option>
+                    <option value="unsold" @selected(($filters['status'] ?? '') == 'unsold')>Unsold</option>
+                    <option value="sold" @selected(($filters['status'] ?? '') == 'sold')>Sold</option>
+                </x-select-input>
+            </div>
+
+            <div class="form-field">
+                <x-input-label for="filter_record_status" value="Record Status" />
+                <x-select-input id="filter_record_status" name="record_status">
                     <option value="">Active</option>
-                    <option value="trashed" @selected(($filters['status'] ?? '') == 'trashed')>Deleted</option>
+                    <option value="trashed" @selected(($filters['record_status'] ?? '') == 'trashed' || (($filters['status'] ?? '') == 'trashed'))>Deleted</option>
                 </x-select-input>
             </div>
         </x-filter-offcanvas>
 
 
 
-        <x-data-table-card :paginator="$purchases">
+        <x-data-table-card class="purchase-data-table" :paginator="$purchases">
 
             <thead>
 
@@ -173,17 +184,23 @@
 
                     <th>Slip</th>
 
+                    <th>Fuel</th>
+
                     <th>Pump</th>
 
                     <th>Vehicle</th>
 
                     <th>Qty</th>
 
+                    <th class="text-right">Rate</th>
+
                     <th class="text-right">Discount</th>
 
                     <th class="text-right">Bonus</th>
 
                     <th class="text-right">Amount</th>
+
+                    <th>Status</th>
 
                     <th class="text-right">Actions</th>
 
@@ -197,9 +214,11 @@
 
                     <tr>
 
-                        <td data-label="Date">{{ $purchase->purchase_date->format('d M Y') }}</td>
+                        <td class="whitespace-nowrap" data-label="Date">{{ $purchase->purchase_date->format('d M Y') }}</td>
 
                         <td class="col-primary font-mono text-slate-900" data-label="Slip">{{ $purchase->slip_number }}</td>
+
+                        <td data-label="Fuel">{{ strtoupper($purchase->fuel_type?->value ?? 'cng') }}</td>
 
                         <td data-label="Pump">{{ $purchase->pump?->name }}</td>
 
@@ -207,11 +226,24 @@
 
                         <td data-label="Qty">{{ number_format((float) $purchase->quantity, 2) }}</td>
 
+                        <td class="text-right" data-label="Rate">{{ number_format((float) $purchase->rate, 2) }}</td>
+
                         <td class="text-right" data-label="Discount">{{ $purchase->displayDiscount() }}</td>
 
                         <td class="text-right" data-label="Bonus">{{ $purchase->displayBonus() }}</td>
 
-                        <td class="text-right font-medium text-slate-900" data-label="Amount">{{ number_format((float) $purchase->amount, 2) }}</td>
+                        <td class="text-right font-semibold text-slate-900" data-label="Amount">{{ number_format((float) $purchase->amount, 2) }}</td>
+
+                        <td data-label="Status">
+                            <form method="post" action="{{ route('purchases.toggle-status', $purchase) }}" class="flex justify-end sm:justify-start">
+                                    @csrf
+                                    @method('patch')
+                                    <select name="status" class="h-9 min-w-28 rounded-full border px-3 text-xs font-semibold shadow-sm focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 {{ $purchase->status?->value === 'sold' ? 'border-violet-200 bg-violet-50 text-violet-700' : 'border-slate-200 bg-slate-50 text-slate-700' }}" @disabled($purchase->status?->value === 'sold') onchange="if (this.value === 'sold') this.form.submit()">
+                                        <option value="unsold" @selected($purchase->status?->value !== 'sold')>Unsold</option>
+                                        <option value="sold" @selected($purchase->status?->value === 'sold')>Sold</option>
+                                    </select>
+                            </form>
+                        </td>
 
                         <td class="col-actions text-right">
 
@@ -231,6 +263,8 @@
                                     'purchase_date' => $purchase->purchase_date->format('Y-m-d'),
 
                                     'pump_id' => (string) $purchase->pump_id,
+
+                                    'fuel_type' => $purchase->fuel_type?->value ?? 'cng',
 
                                     'slip_number' => $purchase->slip_number,
 
@@ -271,7 +305,7 @@
 
                     <tr class="data-table-empty-row">
 
-                        <td colspan="9" class="data-table-empty">No purchase entries found.</td>
+                        <td colspan="12" class="data-table-empty">No purchase entries found.</td>
 
                     </tr>
 

@@ -22,6 +22,15 @@
         </div>
 
         <div class="form-field">
+            <x-input-label for="purchase_fuel_type" value="Fuel Type" />
+            <x-select-input id="purchase_fuel_type" name="fuel_type" required>
+                <option value="cng" @selected(old('fuel_type', 'cng') === 'cng')>CNG</option>
+                <option value="diesel" @selected(old('fuel_type') === 'diesel')>Diesel</option>
+            </x-select-input>
+            <x-input-error :messages="$errors->get('fuel_type')" />
+        </div>
+
+        <div class="form-field">
             <x-input-label for="purchase_slip_number" value="Slip Number" />
             <x-text-input id="purchase_slip_number" name="slip_number" type="text" :value="old('slip_number')" required />
             <x-input-error :messages="$errors->get('slip_number')" />

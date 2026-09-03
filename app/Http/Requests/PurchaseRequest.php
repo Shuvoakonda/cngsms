@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\FuelType;
 use App\Enums\PumpStatus;
 use App\Enums\VehicleStatus;
 use Illuminate\Foundation\Http\FormRequest;
@@ -20,6 +21,7 @@ class PurchaseRequest extends FormRequest
             'vehicle_id' => $this->input('vehicle_id') ?: null,
             'driver_id' => $this->input('driver_id') ?: null,
             'guest_reference' => $this->filled('guest_reference') ? trim((string) $this->input('guest_reference')) : null,
+            'fuel_type' => $this->filled('fuel_type') ? $this->input('fuel_type') : FuelType::CNG->value,
             'discount_value' => $this->filled('discount_value') ? $this->input('discount_value') : null,
             'discount_type' => $this->filled('discount_value') ? ($this->input('discount_type') ?: 'taka') : null,
             'bonus_value' => $this->filled('bonus_value') ? $this->input('bonus_value') : null,
@@ -54,6 +56,7 @@ class PurchaseRequest extends FormRequest
             'driver_id' => ['nullable', 'exists:drivers,id'],
             'guest_reference' => ['nullable', 'string', 'max:100'],
             'pump_id' => ['required', Rule::exists('pumps', 'id')->where('status', PumpStatus::Active->value)],
+            'fuel_type' => ['required', Rule::in(array_map(fn (FuelType $type) => $type->value, FuelType::cases()))],
             'slip_number' => [
                 'required',
                 'string',

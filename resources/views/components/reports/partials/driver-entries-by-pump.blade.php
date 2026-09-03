@@ -14,6 +14,7 @@
                     <th>Driver</th>
                     <th class="text-right">Entries</th>
                     <th class="text-right">Qty</th>
+                    <th class="text-right">Rate</th>
                     <th class="text-right">Discount</th>
                     <th class="text-right">Bonus</th>
                     <th class="text-right">Amount</th>
@@ -26,13 +27,14 @@
                         <td data-label="Driver">{{ $row['driver'] }}</td>
                         <td class="text-right font-medium" data-label="Entries">{{ $row['count'] }}</td>
                         <td class="text-right" data-label="Qty">{{ number_format($row['quantity'], 2) }}</td>
+                        <td class="text-right" data-label="Rate">{{ number_format($row['rate'], 2) }}</td>
                         <td class="text-right" data-label="Discount">{{ number_format($row['discount'], 2) }}</td>
                         <td class="text-right" data-label="Bonus">{{ number_format($row['bonus'], 2) }}</td>
                         <td class="text-right font-medium" data-label="Amount">{{ number_format($row['amount'], 2) }}</td>
                     </tr>
                 @empty
                     <tr class="data-table-empty-row">
-                        <td colspan="7" class="data-table-empty">No data for selected filters.</td>
+                        <td colspan="8" class="data-table-empty">No data for selected filters.</td>
                     </tr>
                 @endforelse
             </tbody>

@@ -66,6 +66,23 @@
         overflow-y: auto;
     }
 
+    .purchase-data-table .data-table-scroll {
+        width: 100%;
+        max-width: 100%;
+        max-height: none;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    .purchase-data-table .data-table {
+        width: max-content;
+        min-width: 100%;
+    }
+
+    .purchase-data-table .data-table th:first-child {
+        white-space: nowrap;
+    }
+
     .data-table {
         @apply min-w-full text-sm;
     }
@@ -124,6 +141,56 @@
 
     .stat-card {
         @apply rounded-2xl bg-white p-4 ring-1 ring-slate-200 sm:p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:ring-slate-300 relative overflow-hidden animate-fade-in-up;
+    }
+
+    .report-summary-card {
+        @apply relative min-h-28 overflow-hidden rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md sm:p-5;
+    }
+
+    .report-summary-card::before {
+        content: '';
+        @apply absolute inset-y-0 left-0 w-1;
+    }
+
+    .report-summary-card-total {
+        @apply flex items-center justify-between bg-slate-900 text-white ring-slate-900;
+    }
+
+    .report-summary-card-total::before {
+        @apply bg-teal-400;
+    }
+
+    .report-summary-card-teal::before { @apply bg-teal-500; }
+    .report-summary-card-amber::before { @apply bg-amber-500; }
+    .report-summary-card-violet::before { @apply bg-violet-500; }
+    .report-summary-card-emerald::before { @apply bg-emerald-500; }
+    .report-summary-card-orange::before { @apply bg-orange-500; }
+    .report-summary-card-slate::before { @apply bg-slate-400; }
+
+    .report-summary-label {
+        @apply text-xs font-semibold uppercase tracking-wider text-slate-500;
+    }
+
+    .report-summary-card-total .report-summary-label { @apply text-slate-300; }
+
+    .report-summary-value {
+        @apply mt-2 truncate text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl;
+    }
+
+    .report-summary-value-total {
+        @apply text-3xl text-white sm:text-4xl;
+    }
+
+    .report-summary-note {
+        @apply mt-1 text-xs text-slate-400;
+    }
+
+    .report-summary-mark {
+        @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl font-bold;
+    }
+
+    .report-summary-mark-total {
+        @apply bg-teal-500/20 text-teal-300;
     }
 
     .role-card {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PumpStatus;
+use App\Enums\PurchaseStatus;
 use App\Enums\VehicleStatus;
 use App\Http\Requests\PurchaseRequest;
 use App\Models\Driver;
@@ -43,8 +44,12 @@ class PurchaseController extends Controller
             }
         }
 
-        if ($request->input('status') === 'trashed') {
+        if ($request->input('record_status', $request->input('status') === 'trashed' ? 'trashed' : null) === 'trashed') {
             $query->onlyTrashed();
+        }
+
+        if (in_array($request->input('status'), ['sold', 'unsold'], true)) {
+            $query->where('status', $request->input('status'));
         }
 
         $purchases = $query->paginate(20)->withQueryString();
@@ -73,6 +78,7 @@ class PurchaseController extends Controller
             'defaults' => [
                 'purchase_date' => now()->toDateString(),
                 'pump_id' => '',
+                'fuel_type' => 'cng',
                 'slip_number' => '',
                 'vehicle_id' => '',
                 'driver_id' => '',
@@ -89,6 +95,7 @@ class PurchaseController extends Controller
             'id' => $purchase->id,
             'purchase_date' => $purchase->purchase_date->toDateString(),
             'pump_id' => (string) $purchase->pump_id,
+            'fuel_type' => $purchase->fuel_type?->value ?? 'cng',
             'slip_number' => $purchase->slip_number,
             'vehicle_id' => (string) ($purchase->vehicle_id ?? ''),
             'driver_id' => (string) ($purchase->driver_id ?? ''),
@@ -107,7 +114,7 @@ class PurchaseController extends Controller
             'pumps' => Pump::query()->where('status', PumpStatus::Active)->orderBy('name')->get(['id', 'name']),
             'vehicles' => Vehicle::query()->where('status', VehicleStatus::Active)->orderBy('vehicle_number')->get(['id', 'vehicle_number', 'driver_id']),
             'drivers' => Driver::query()->orderBy('name')->get(['id', 'name']),
-            'filters' => $request->only(['date_from', 'date_to', 'pump_id', 'vehicle_id', 'status']),
+            'filters' => $request->only(['date_from', 'date_to', 'pump_id', 'vehicle_id', 'status', 'record_status']),
             'offcanvasConfig' => $offcanvasConfig,
         ]);
     }
@@ -131,6 +138,19 @@ class PurchaseController extends Controller
         return redirect()
             ->route('purchases.index')
             ->with('status', 'Purchase entry updated successfully.');
+    }
+
+    public function toggleStatus(Purchase $purchase): RedirectResponse
+    {
+        if ($purchase->status !== PurchaseStatus::Sold) {
+            $purchase->update(['status' => PurchaseStatus::Sold]);
+        }
+
+        return redirect()
+            ->route('purchases.index', request()->query())
+            ->with('status', $purchase->status === PurchaseStatus::Sold
+                ? 'Purchase marked as sold.'
+                : 'Purchase is already sold.');
     }
 
     public function destroy(Purchase $purchase): RedirectResponse
