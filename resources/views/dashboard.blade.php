@@ -215,8 +215,12 @@
                             <div class="min-w-0 flex-1">
                                 <p class="truncate font-medium text-slate-900">{{ $pump['pump'] }}</p>
                                 <p class="mt-1 text-xs text-slate-500">
-                                    {{ number_format($pump['quantity'], 2) }} {{ $company->quantity_unit ?? 'KG' }}
-                                    · {{ $pump['count'] }} slip{{ $pump['count'] === 1 ? '' : 's' }}
+                                    {{ strtoupper($pump['fuel_type']) }}
+                                    <span class="mx-1 text-slate-300">·</span>
+                                    Purchased: {{ number_format($pump['amount'], 2) }}
+                                </p>
+                                <p class="mt-1 text-xs font-medium text-teal-700">
+                                    Sold: {{ number_format($pump['sold_amount'], 2) }}
                                 </p>
                             </div>
                             <p class="whitespace-nowrap text-sm font-semibold text-slate-900">{{ number_format($pump['amount'], 2) }}</p>

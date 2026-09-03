@@ -192,17 +192,17 @@ class DashboardService
 
         return Purchase::query()
             ->join('pumps', 'purchases.pump_id', '=', 'pumps.id')
-            ->selectRaw('pumps.name as pump_name, SUM(purchases.amount) as total_amount, SUM(purchases.quantity) as total_quantity, COUNT(*) as purchase_count')
+            ->selectRaw("pumps.name as pump_name, purchases.fuel_type, SUM(purchases.amount) as total_amount, SUM(CASE WHEN purchases.status = 'sold' THEN purchases.amount ELSE 0 END) as sold_amount")
             ->whereBetween('purchase_date', [$start, $end])
-            ->groupBy('pumps.id', 'pumps.name')
+            ->groupBy('pumps.id', 'pumps.name', 'purchases.fuel_type')
             ->orderByDesc('total_amount')
             ->limit($limit)
             ->get()
             ->map(fn ($row) => [
                 'pump' => $row->pump_name,
+                'fuel_type' => $row->fuel_type,
                 'amount' => (float) $row->total_amount,
-                'quantity' => (float) $row->total_quantity,
-                'count' => (int) $row->purchase_count,
+                'sold_amount' => (float) $row->sold_amount,
             ]);
     }
 
